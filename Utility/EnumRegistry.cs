@@ -3,15 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace CupAPI.Utility {
-    public class EnumRegistry(Type type) {
 
-        private readonly Dictionary<string, int> namesAndIds = [];
-        private readonly Dictionary<int, string> idsAndNames = [];
+    public interface IEnumRegistry
+    {
+        void Register(string name);
+        string GetName(int id);
+        int GetId(string name);
+        bool ContainsName(string name);
+        bool ContainsId(int value);
+        List<string> GetNames();
+        List<int> GetIds();
+    }
 
-        public readonly Type type = type;
+    public class EnumRegistry<TEnum> : IEnumRegistry where TEnum : Enum {
+
+        private readonly Dictionary<string, int> namesAndIds = new Dictionary<string, int>();
+        private readonly Dictionary<int, string> idsAndNames = new Dictionary<int, string>();
 
         public void Register(string name) {
-            int id = GetHighestId() + 1;
+            int id = this.LargestId() + 1;
             if (!namesAndIds.ContainsKey(name)) {
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
@@ -46,10 +56,10 @@ namespace CupAPI.Utility {
             return namesAndIds.Values.ToList();
         }
 
-        private int GetHighestId() {
+        private int LargestId() {
             int result = 0;
-            foreach (int intValue in Enum.GetValues(type)) {
-                if (intValue > result)
+            foreach (int intValue in Enum.GetValues(typeof(TEnum))) {
+                if (intValue > result && intValue != int.MaxValue)
                     result = intValue;
             }
             return result;

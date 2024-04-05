@@ -61,7 +61,7 @@ namespace CupAPI.Patchers {
                 foreach (string name in newNames)
                     list.Add(name);
 
-                __result = [.. list];
+                __result = list.ToArray();
             }
         }
 
@@ -91,7 +91,7 @@ namespace CupAPI.Patchers {
         [HarmonyPrefix]
         private static bool Patch_GetName(Type enumType, object value, ref string __result) {
             if (EnumManager.TryGetRegistry(enumType, out var registry)) {
-                int intValue = (int)value;
+                int intValue = (int) value;
                 string name = registry.GetName(intValue);
                 if (name != null) {
                     __result = name;

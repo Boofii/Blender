@@ -1,41 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace CupAPI.Utility {
     public static class EnumManager {
 
-        private static readonly Dictionary<Type, EnumRegistry> enumRegistries = [];
-        private static readonly Dictionary<Type, object> registries = [];
+        private static readonly Dictionary<Type, IEnumRegistry> registries = [];
 
-        public static void Register<TEnum>() where TEnum : Enum {
+        public static EnumRegistry<TEnum> Register<TEnum>() where TEnum : Enum {
             Type type = typeof(TEnum);
-            if (!enumRegistries.ContainsKey(type))
-                enumRegistries[type] = new EnumRegistry(type);
-        }
-
-        public static void Register<TEnum, TValue>() where TEnum : Enum {
-            Register<TEnum>();
-            Type type = typeof(TEnum);
-            if (!registries.ContainsKey(type))
-                registries[type] = new Registry<TValue>();
-        }
-
-        public static bool TryGetRegistry<TEnum>(out EnumRegistry registry) where TEnum : Enum {
-            Type type = typeof(TEnum);
-            return enumRegistries.TryGetValue(type, out registry);
-        }
-
-        public static bool TryGetRegistry<TEnum, TValue>(out Registry<TValue> registry) where TEnum : Enum {
-            registry = null;
-            if (TryGetRegistry<TEnum>(out _)) {
-                Type type = typeof(TEnum);
-                if (registries.TryGetValue(type, out object registryObj)) {
-                    if (registryObj is Registry<TValue> reg) {
-                        registry = reg;
-                        return true;
-                    }
-                }
+            if (!registries.ContainsKey(type)) {
+                var registry = new EnumRegistry<TEnum>();
+                registries[type] = registry;
+                return registry;
             }
+            return null;
+        }
+
+        public static bool TryGetRegistry<TEnum>(out EnumRegistry<TEnum> registry) where TEnum : Enum {
+            Type type = typeof(TEnum);
+            registry = null;
+            if (registries.TryGetValue(type, out var reg) && reg is EnumRegistry<TEnum> reg1) {
+                registry = reg1;
+                return true;
+            }
+            return false;
+        }
+
+        public static bool TryGetRegistry(Type type, out IEnumRegistry registry) {
+            registry = null;
+            if (type.IsEnum)
+                return registries.TryGetValue(type, out registry);
             return false;
         }
     }
