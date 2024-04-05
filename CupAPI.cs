@@ -4,6 +4,7 @@ using CupAPI.Content;
 using CupAPI.Util;
 using CupAPI.Utility;
 using HarmonyLib;
+using System;
 
 namespace CupAPI {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -17,9 +18,10 @@ namespace CupAPI {
             Logger.LogInfo($"CupAPI v{PluginInfo.PLUGIN_VERSION} was initialized!");
             CustomData.Initialize();
 
-            EnumManager.Register<Charm>();
-            if (EnumManager.TryGetRegistry<Charm>(out var registry)) {
-                registry.Register("charm_god");
+            EnumManager.Register<Charm, ICharm>();
+            if (EnumManager.TryGetRegistry<Charm>(out var enumRegistry) && EnumManager.TryGetRegistry<Charm, ICharm>(out var registry)) {
+                enumRegistry.Register("charm_god");
+                registry.Register("charm_god", new GodCharm());
             }
         }
     }
