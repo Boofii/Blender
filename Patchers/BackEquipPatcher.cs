@@ -16,7 +16,7 @@ namespace CupAPI.Patchers {
         private static bool Patch_ChangeSelection(MapEquipUICardBackSelect __instance, Trilean2 direction) {
             int index = TraverseHelper.GetField<int>(__instance, "index");
             MapEquipUICard.Slot slot = TraverseHelper.GetField<MapEquipUICard.Slot>(__instance, "slot");
-
+            
             if (slot == MapEquipUICard.Slot.CHARM) {
                 int lastPage = Registries.CharmPages.Count;
                 bool pageChanged = false;
@@ -49,7 +49,7 @@ namespace CupAPI.Patchers {
     }
 
     [HarmonyPatch(typeof(MapEquipUICardBackSelect))]
-    internal static class ContentInjector {
+    internal static class ContentAdder {
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
             foreach (var instruction in instructions) {

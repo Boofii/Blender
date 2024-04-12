@@ -7,6 +7,7 @@ namespace CupAPI.Utility {
 
         private readonly EnumRegistry<TEnum> enumRegistry;
         private readonly Dictionary<string, TValue> namesAndValues = [];
+        private readonly Dictionary<TValue, string> valuesAndNames = [];
         private readonly Action<string> RegisteredEvent;
 
         public LinkedRegistry() {
@@ -22,6 +23,7 @@ namespace CupAPI.Utility {
             if (!namesAndValues.ContainsKey(name) && enumRegistry != null) {
                 enumRegistry.Register(name);
                 namesAndValues[name] = value;
+                valuesAndNames[value] = name;
 
                 RegisteredEvent?.Invoke(name);
             }
@@ -34,8 +36,19 @@ namespace CupAPI.Utility {
             return default;
         }
 
+        public string GetName(TValue value) {
+            if (valuesAndNames.ContainsKey(value))
+                return valuesAndNames[value];
+
+            return null;
+        }
+
         public List<TValue> GetValues() {
             return namesAndValues.Values.ToList();
+        }
+
+        public List<string> GetNames() {
+            return namesAndValues.Keys.ToList();
         }
     }
 }

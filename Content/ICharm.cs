@@ -5,6 +5,5 @@
         public string Subtext { get; }
         public string Description { get; }
         public string IconBundle { get; }
-        public string IconName { get; }
     }
 }

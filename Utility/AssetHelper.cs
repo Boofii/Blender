@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace CupAPI.Util {
     public static class AssetHelper {
@@ -53,10 +54,13 @@ namespace CupAPI.Util {
                 LoadBundle(bundleName);
 
             if (TryGetBundle(bundleName, out AssetBundle bundle)) {
-                T[] assets = bundle.LoadAllAssets<T>();
-                foreach (T asset in assets)
-                    AssetCache.AddAsset($"{bundleName}:{asset.name}", asset);
-                UnloadBundle(bundleName, false);
+                AssetBundleRequest assetsRequests = bundle.LoadAllAssetsAsync<T>();
+                assetsRequests.completed += delegate {
+                    foreach (Object asset in assetsRequests.allAssets)
+                        if (asset is T)
+                            AssetCache.AddAsset($"{bundleName}:{asset.name}", asset);
+                    UnloadBundle(bundleName, false);
+                };
             }
         }
 
@@ -66,7 +70,7 @@ namespace CupAPI.Util {
 
             if (TryGetBundle(bundleName, out AssetBundle bundle)) {
                 AssetBundleRequest assetRequest = bundle.LoadAssetAsync<T>(assetName);
-                assetRequest.completed += delegate (AsyncOperation operation) {
+                assetRequest.completed += delegate {
                     AssetCache.AddAsset($"{bundleName}:{assetRequest.asset.name}", assetRequest.asset);
                     UnloadBundle(bundleName, false);
                 };

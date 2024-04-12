@@ -47,7 +47,7 @@ namespace CupAPI.Patchers {
         private static bool Patch_GetIconPath(Charm charm, ref string __result) {
             ICharm charmInfo = Registries.Charms.Get(charm.ToString());
             if (charmInfo != null) {
-                __result = $"{charmInfo.IconBundle}:{charmInfo.IconName}";
+                __result = $"{charmInfo.IconBundle}:{Registries.Charms.GetName(charmInfo)}";
                 return false;
             }
             return true;
@@ -70,8 +70,11 @@ namespace CupAPI.Patchers {
         }
 
         private static void AddCustomSprites(string iconPath, List<Sprite> list) {
-            if (AssetCache.GetAsset(iconPath, out Sprite sprite))
+            int index = 0;
+            while(AssetCache.GetAsset(iconPath + index, out Sprite sprite)) {
                 list.Add(sprite);
+                index++;
+            }
         }
     }
 }
