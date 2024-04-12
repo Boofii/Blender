@@ -8,7 +8,7 @@ namespace CupAPI.Util {
     public static class CustomData {
 
         internal static readonly Dictionary<int, Dictionary<string, object>> Data = [];
-        public static Action DataLoadedEvent;
+        public static Action DataLoadedEvent { private get; set; }
 
         public static bool TryGet<T>(int slot, string key, out T value) where T : class {
             value = null;

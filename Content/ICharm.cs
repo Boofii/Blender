@@ -1,8 +1,10 @@
 ﻿namespace CupAPI.Content {
     public interface ICharm
     {
-        public string Name { get; }
-        public string IconPath { get; }
-        public int Value { get; }
+        public string DisplayName { get; }
+        public string Subtext { get; }
+        public string Description { get; }
+        public string IconBundle { get; }
+        public string IconName { get; }
     }
 }

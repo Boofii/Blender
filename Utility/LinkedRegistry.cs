@@ -5,32 +5,33 @@ using System.Linq;
 namespace CupAPI.Utility {
     public class LinkedRegistry<TEnum, TValue> where TEnum : Enum {
 
-        public readonly EnumRegistry<TEnum> EnumRegistry;
+        private readonly EnumRegistry<TEnum> enumRegistry;
         private readonly Dictionary<string, TValue> namesAndValues = [];
+        private readonly Action<string> RegisteredEvent;
 
         public LinkedRegistry() {
-            EnumRegistry = EnumManager.Register<TEnum>();
+            enumRegistry = EnumManager.Register<TEnum>();
+        }
+
+        public LinkedRegistry(Action<string> registeredEvent) {
+            enumRegistry = EnumManager.Register<TEnum>();
+            this.RegisteredEvent = registeredEvent;
         }
 
         public void Register(string name, TValue value) {
-            if (!namesAndValues.ContainsKey(name) && EnumRegistry != null) {
-                EnumRegistry.Register(name);
+            if (!namesAndValues.ContainsKey(name) && enumRegistry != null) {
+                enumRegistry.Register(name);
                 namesAndValues[name] = value;
+
+                RegisteredEvent?.Invoke(name);
             }
         }
 
         public TValue Get(string name) {
             if (namesAndValues.ContainsKey(name))
                 return namesAndValues[name];
+
             return default;
-        }
-
-        public bool ContainsName(string name) {
-            return namesAndValues.ContainsKey(name);
-        }
-
-        public List<string> GetNames() {
-            return namesAndValues.Keys.ToList();
         }
 
         public List<TValue> GetValues() {

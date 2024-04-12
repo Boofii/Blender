@@ -2,8 +2,8 @@
 using BepInEx.Logging;
 using CupAPI.Content;
 using CupAPI.Util;
-using CupAPI.Utility;
 using HarmonyLib;
+using UnityEngine;
 
 namespace CupAPI {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -17,8 +17,8 @@ namespace CupAPI {
             Logger.LogInfo($"CupAPI v{PluginInfo.PLUGIN_VERSION} was initialized!");
             CustomData.Initialize();
 
-            LinkedRegistry<Charm, ICharm> charmRegistry = new();
-            charmRegistry.Register("charm_god", new GodCharm());
+            Registries.Charms.Register("charm_god", new GodCharm());
+            AssetHelper.CacheAssets<Sprite>("equip_menu");
         }
     }
 }

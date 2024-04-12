@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace CupAPI.Utility {
 
-    public interface IEnumRegistry
+    internal interface IEnumRegistry
     {
         void Register(string name);
         string GetName(int id);
@@ -17,12 +17,12 @@ namespace CupAPI.Utility {
 
     public class EnumRegistry<TEnum> : IEnumRegistry where TEnum : Enum {
 
-        private readonly Dictionary<string, int> namesAndIds = new Dictionary<string, int>();
-        private readonly Dictionary<int, string> idsAndNames = new Dictionary<int, string>();
+        private readonly Dictionary<string, int> namesAndIds = [];
+        private readonly Dictionary<int, string> idsAndNames = [];
 
         public void Register(string name) {
-            int id = this.LargestId() + 1;
             if (!namesAndIds.ContainsKey(name)) {
+                int id = this.LargestId() + 1;
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
             }
