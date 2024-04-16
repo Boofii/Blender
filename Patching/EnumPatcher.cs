@@ -3,7 +3,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 
-namespace CupAPI.Patchers {
+namespace CupAPI.Patching {
     [HarmonyPatch(typeof(Enum))]
     internal static class EnumPatcher {
 

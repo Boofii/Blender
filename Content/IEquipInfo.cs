@@ -1,9 +1,11 @@
 ﻿namespace CupAPI.Content {
-    public interface ICharm
+    public interface IEquipInfo
     {
         public string DisplayName { get; }
         public string Subtext { get; }
         public string Description { get; }
-        public string IconBundle { get; }
+        public string BundleName { get; }
+        public string[] NormalIcons { get; }
+        public string[] GreyIcons { get; }
     }
 }

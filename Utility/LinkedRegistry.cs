@@ -43,6 +43,10 @@ namespace CupAPI.Utility {
             return null;
         }
 
+        public bool ContainsName(string name) {
+            return namesAndValues.ContainsKey(name);
+        }
+
         public List<TValue> GetValues() {
             return namesAndValues.Values.ToList();
         }

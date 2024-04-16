@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace CupAPI.Util {
+namespace CupAPI.Utility {
     [HarmonyPatch(typeof(JsonUtility))]
     public static class CustomData {
 

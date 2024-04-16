@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using CupAPI.Util;
+using CupAPI.Content;
+using CupAPI.Utility;
 using HarmonyLib;
 
 namespace CupAPI {
@@ -14,6 +15,8 @@ namespace CupAPI {
             Harmony.PatchAll(); Logger = base.Logger;
             Logger.LogInfo($"CupAPI v{PluginInfo.PLUGIN_VERSION} was initialized!");
             CustomData.Initialize();
+
+            ContentManager.Charms.Register("charm_float", new RedbullCharm());
         }
     }
 }

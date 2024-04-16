@@ -1,15 +1,14 @@
-﻿using CupAPI.Utility;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.Assertions;
 
-namespace CupAPI.Util {
+namespace CupAPI.Utility {
     public static class AssetHelper {
 
         private static readonly Dictionary<string, AssetBundle> Bundles = [];
+        private static readonly Dictionary<string, Object> Assets = [];
 
         public static AssetBundle LoadBundle(string bundleName) {
             if (!Bundles.ContainsKey(bundleName)) {
@@ -27,15 +26,14 @@ namespace CupAPI.Util {
             return Bundles[bundleName];
         }
 
-        public static bool UnloadBundle(string bundleName, bool unloadAllLoadedObjects) {
+        public static void UnloadBundle(string bundleName, bool unloadAllLoadedObjects) {
             if (Bundles.TryGetValue(bundleName, out var bundle)) {
-                Bundles.Remove(bundleName);
                 bundle.Unload(unloadAllLoadedObjects);
-                return true;
+                Bundles.Remove(bundleName);
+                return;
             }
 
             CupAPI.Logger.LogError($"Couldn't find an asset bundle with name {bundleName}");
-            return false;
         }
 
         public static bool TryGetBundle(string bundleName, out AssetBundle bundle) {
@@ -49,40 +47,65 @@ namespace CupAPI.Util {
             return false;
         }
 
-        public static void CacheAssets<T>(string bundleName) where T : Object {
-            if (!HasBundle(bundleName))
-                LoadBundle(bundleName);
+        public static bool TryGetAsset<T>(string bundleName, string path, out T asset) where T : Object {
+            string assetPath = $"{bundleName}:{path}";
+            asset = default;
 
-            if (TryGetBundle(bundleName, out AssetBundle bundle)) {
-                AssetBundleRequest assetsRequests = bundle.LoadAllAssetsAsync<T>();
-                assetsRequests.completed += delegate {
-                    foreach (Object asset in assetsRequests.allAssets)
-                        if (asset is T)
-                            AssetCache.AddAsset($"{bundleName}:{asset.name}", asset);
-                    UnloadBundle(bundleName, false);
-                };
+            if (Assets.TryGetValue(assetPath, out var asst) && asst is T t) {
+                asset = t;
+                return true;
             }
+
+            CupAPI.Logger.LogError($"Couldn't find an asset with path {path}");
+            return false;
         }
 
-        public static void CacheAsset<T>(string bundleName, string assetName) where T : Object {
-            if (!HasBundle(bundleName))
+        public static T GetAsset<T>(string bundleName, string path) where T : Object {
+            if (TryGetAsset(bundleName, path, out T asset))
+                return asset;
+            return default;
+        }
+
+        public static T CacheAsset<T>(string bundleName, string assetName) where T : Object {
+            string assetPath = $"{bundleName}:{assetName}";
+            if (ContainsAsset(assetPath))
+                return GetAsset<T>(bundleName, assetName);
+
+            if (!ContainsBundle(bundleName))
                 LoadBundle(bundleName);
 
+            T asset = default;
             if (TryGetBundle(bundleName, out AssetBundle bundle)) {
                 AssetBundleRequest assetRequest = bundle.LoadAssetAsync<T>(assetName);
                 assetRequest.completed += delegate {
-                    AssetCache.AddAsset($"{bundleName}:{assetRequest.asset.name}", assetRequest.asset);
+                    asset = (T)assetRequest.asset;
+                    AddAsset(assetPath, asset);
                     UnloadBundle(bundleName, false);
                 };
             }
+            return asset;
         }
 
-        public static bool HasBundle(string bundleName) {
+        public static bool ContainsBundle(string bundleName) {
             return Bundles.ContainsKey(bundleName);
+        }
+
+        public static bool ContainsAsset(string path) {
+            return Assets.ContainsKey(path);
         }
 
         public static List<AssetBundle> GetBundles() {
             return Bundles.Values.ToList();
+        }
+
+        public static List<Object> GetAssets() {
+            return Assets.Values.ToList();
+        }
+
+        private static void AddAsset(string path, Object asset) {
+            if (Assets.ContainsKey(path))
+                return;
+            Assets.Add(path, asset);
         }
     }
 }

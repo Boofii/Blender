@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using MonoMod.Utils;
-using CupAPI.Util;
+using CupAPI.Utility;
 
-namespace CupAPI.Patchers {
+namespace CupAPI.Patching {
     [HarmonyPatch(typeof(JsonUtility))]
     internal static class JsonPatcher {
 

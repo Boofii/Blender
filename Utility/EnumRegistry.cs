@@ -21,7 +21,7 @@ namespace CupAPI.Utility {
         private readonly Dictionary<int, string> idsAndNames = [];
 
         public void Register(string name) {
-            if (!namesAndIds.ContainsKey(name)) {
+            if (!namesAndIds.ContainsKey(name) && !Enum.GetNames(typeof(TEnum)).Contains(name)) {
                 int id = this.LargestId() + 1;
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
