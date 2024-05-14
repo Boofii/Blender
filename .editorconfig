@@ -29,6 +29,9 @@ dotnet_diagnostic.IDE0002.severity = none
 # Harmony003: Harmony non-ref patch parameters modified
 dotnet_diagnostic.Harmony003.severity = none
 
+# IDE0038: Use pattern matching
+dotnet_diagnostic.IDE0038.severity = none
+
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4

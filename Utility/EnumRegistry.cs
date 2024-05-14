@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CupAPI.Utility {
+namespace Blender.Utility {
 
     internal interface IEnumRegistry
     {
@@ -21,7 +21,9 @@ namespace CupAPI.Utility {
         private readonly Dictionary<int, string> idsAndNames = [];
 
         public void Register(string name) {
-            if (!namesAndIds.ContainsKey(name) && !Enum.GetNames(typeof(TEnum)).Contains(name)) {
+            if (Enum.IsDefined(typeof(TEnum), name))
+                return;
+            if (!namesAndIds.ContainsKey(name)) {
                 int id = this.LargestId() + 1;
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
@@ -58,10 +60,9 @@ namespace CupAPI.Utility {
 
         private int LargestId() {
             int result = 0;
-            foreach (int intValue in Enum.GetValues(typeof(TEnum))) {
+            foreach (int intValue in Enum.GetValues(typeof(TEnum)))
                 if (intValue > result && intValue != int.MaxValue)
                     result = intValue;
-            }
             return result;
         }
     }

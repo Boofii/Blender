@@ -1,58 +1,71 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace CupAPI.Utility {
-    [HarmonyPatch(typeof(JsonUtility))]
-    public static class CustomData {
+namespace Blender.Utility;
 
-        internal static readonly Dictionary<int, Dictionary<string, object>> Data = [];
-        public static Action DataLoadedEvent { private get; set; }
+public static class CustomData
+{
 
-        public static bool TryGet<T>(int slot, string key, out T value) where T : class {
-            value = null;
-            if (Data.TryGetValue(slot, out var customData)) {
-                if (customData.TryGetValue(key, out var val))
-                    try {
-                        value = SimpleJson.SimpleJson.DeserializeObject<T>(val.ToString());
-                        if (value != null)
-                            return true;
-                    }
-                    catch (Exception) {}
-            }
-            return false;
+    internal static readonly Dictionary<int, Dictionary<string, object>> Data = [];
+    public static Action DataLoadedEvent { private get; set; }
+
+    public static bool TryGet<T>(int slot, string key, out T value) where T : class
+    {
+        value = null;
+        if (Data.TryGetValue(slot, out var customData))
+        {
+            if (customData.TryGetValue(key, out var val))
+                try
+                {
+                    value = SimpleJson.SimpleJson.DeserializeObject<T>(val.ToString());
+                    if (value != null)
+                        return true;
+                }
+                catch (Exception ex) {
+                    Logger.Error($"Couldn't deserialize data for slot {slot} and key {key} with exception: " +
+                        ex);
+                }
         }
+        return false;
+    }
 
-        public static object Get(int slot, string key) {
-            if (Data.TryGetValue(slot, out var customData)) {
-                if (customData.TryGetValue(key, out var value))
-                    return value;
-            }
-            return null;
+    public static object Get(int slot, string key)
+    {
+        if (Data.TryGetValue(slot, out var customData))
+        {
+            if (customData.TryGetValue(key, out var value))
+                return value;
         }
+        return null;
+    }
 
-        public static void Set(int slot, string key, object value) {
-            if (Data.TryGetValue(slot, out var customData))
-                customData[key] = value;
-        }
+    public static void Set(int slot, string key, object value)
+    {
+        if (Data.TryGetValue(slot, out var customData))
+            customData[key] = value;
+    }
 
-        public static void Remove(int slot, string key) {
-            if (Data.TryGetValue(slot, out var customData)) {
-                if (customData.ContainsKey(key))
-                    customData.Remove(key);
-            }
+    public static void Remove(int slot, string key)
+    {
+        if (Data.TryGetValue(slot, out var customData))
+        {
+            if (customData.ContainsKey(key))
+                customData.Remove(key);
         }
+    }
 
-        internal static void Initialize() {
-            for (int i = 0; i < 3; i++)
-                Data[i] = [];
-        }
+    internal static void Initialize(Harmony harmony)
+    {
+        for (int i = 0; i < 3; i++)
+            Data[i] = [];
+        harmony.PatchAll(typeof(CustomData));
+    }
 
-        [HarmonyPatch(typeof(PlayerData), "OnLoaded")]
-        [HarmonyPostfix]
-        private static void Patch_OnLoaded() {
-            DataLoadedEvent?.Invoke();
-        }
+    [HarmonyPatch(typeof(PlayerData), "OnLoaded")]
+    [HarmonyPostfix]
+    private static void Patch_OnLoaded()
+    {
+        DataLoadedEvent?.Invoke();
     }
 }
