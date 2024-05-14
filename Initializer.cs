@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
 
@@ -11,7 +12,8 @@ internal class Initializer : BaseUnityPlugin {
 
     private void Awake() {
         Blender.Logger.Initialize(this.Logger);
-        Blender.Logger.Info($"Blender v{PluginInfo.PLUGIN_VERSION} was initialized.");
+        Logger.LogInfo($"Blender v{PluginInfo.PLUGIN_VERSION} was initialized.");
         CustomData.Initialize(Harmony);
+        EnumPatcher.Initialize(Harmony);
     }
 }

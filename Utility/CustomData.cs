@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using Blender.Patching;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 
@@ -60,6 +61,7 @@ public static class CustomData
         for (int i = 0; i < 3; i++)
             Data[i] = [];
         harmony.PatchAll(typeof(CustomData));
+        harmony.PatchAll(typeof(JsonPatcher));
     }
 
     [HarmonyPatch(typeof(PlayerData), "OnLoaded")]

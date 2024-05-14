@@ -22,7 +22,7 @@ public static class AssetHelper
             AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
             if (bundle == null)
             {
-                Logger.Error($"Couldn't find an asset bundle with path {bundlePath}");
+                Logger.Warning($"Couldn't find an asset bundle with path {bundlePath}");
                 return null;
             }
             Bundles.Add(bundleName, bundle);
@@ -40,7 +40,7 @@ public static class AssetHelper
             return;
         }
 
-        Logger.Error($"Couldn't find an asset bundle with name {bundleName}");
+        Logger.Warning($"Couldn't find an asset bundle with name {bundleName}");
     }
 
     public static bool TryGetBundle(string bundleName, out AssetBundle bundle)
@@ -52,7 +52,7 @@ public static class AssetHelper
             return true;
         }
 
-        Logger.Error($"Couldn't find an asset bundle with name {bundleName}");
+        Logger.Warning($"Couldn't find an asset bundle with name {bundleName}");
         return false;
     }
 
@@ -67,29 +67,28 @@ public static class AssetHelper
             return true;
         }
 
-        Logger.Error($"Couldn't find an asset with path {path}");
+        Logger.Warning($"Couldn't find an asset with path {assetPath}");
         return false;
     }
 
-    public static T CacheAsset<T>(string bundleName, string assetName) where T : Object
+    public static T CacheAsset<T>(string bundleName, string path) where T : Object
     {
-        if (TryGetAsset(bundleName, assetName, out T ast))
-            return ast;
+        if (TryGetAsset(bundleName, path, out T t))
+            return t;
         if (!ContainsBundle(bundleName))
             LoadBundle(bundleName);
 
-        T asset = default;
+        string assetPath = $"{bundleName}:{path}";
         if (TryGetBundle(bundleName, out AssetBundle bundle))
         {
-            AssetBundleRequest assetRequest = bundle.LoadAssetAsync<T>(assetName);
-            assetRequest.completed += delegate
-            {
-                asset = (T)assetRequest.asset;
-                Assets.Add($"{bundleName}:{assetName}", asset);
-                UnloadBundle(bundleName, false);
-            };
+            T asset = bundle.LoadAsset<T>(path);
+            Assets.Add(assetPath, asset);
+            UnloadBundle(bundleName, false);
+            return asset;
         }
-        return asset;
+
+        Logger.Warning($"Failed to cache an asset with path {assetPath}");
+        return default;
     }
 
     public static bool ContainsBundle(string bundleName)
@@ -97,9 +96,9 @@ public static class AssetHelper
         return Bundles.ContainsKey(bundleName);
     }
 
-    public static bool ContainsAsset(string path)
+    public static bool ContainsAsset(string bundleName, string path)
     {
-        return Assets.ContainsKey(path);
+        return Assets.ContainsKey($"{bundleName}:{path}");
     }
 
     public static List<AssetBundle> GetBundles()
@@ -110,12 +109,5 @@ public static class AssetHelper
     public static List<Object> GetAssets()
     {
         return Assets.Values.ToList();
-    }
-
-    private static void AddAsset(string path, Object asset)
-    {
-        if (Assets.ContainsKey(path))
-            return;
-        Assets.Add(path, asset);
     }
 }

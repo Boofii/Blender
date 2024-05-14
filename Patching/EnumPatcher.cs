@@ -120,4 +120,9 @@ internal static class EnumPatcher
         }
         return true;
     }
+
+    internal static void Initialize(Harmony harmony)
+    {
+        harmony.PatchAll(typeof(EnumPatcher));
+    }
 }
