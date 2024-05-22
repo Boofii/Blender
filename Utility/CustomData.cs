@@ -9,7 +9,7 @@ public static class CustomData
 {
 
     internal static readonly Dictionary<int, Dictionary<string, object>> Data = [];
-    public static Action DataLoadedEvent { private get; set; }
+    public static Action DataLoadedEvent { get; set; }
 
     public static bool TryGet<T>(int slot, string key, out T value) where T : class
     {
@@ -24,7 +24,7 @@ public static class CustomData
                         return true;
                 }
                 catch (Exception ex) {
-                    Logger.Error($"Couldn't deserialize data for slot {slot} and key {key} with exception: " +
+                    BlenderAPI.LogError($"Couldn't deserialize data for slot {slot} and key {key} with exception: " +
                         ex);
                 }
         }

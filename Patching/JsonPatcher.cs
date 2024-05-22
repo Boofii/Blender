@@ -31,7 +31,7 @@ internal static class JsonPatcher
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Failed to serialize custom data for slot {currIndex} with exception: "
+                    BlenderAPI.LogError($"Failed to serialize custom data for slot {currIndex} with exception: "
                         + ex);
                 }
             }
@@ -61,7 +61,7 @@ internal static class JsonPatcher
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error($"Failed to deserialize custom data for slot {saveIndex} with exception: "
+                        BlenderAPI.LogError($"Failed to deserialize custom data for slot {saveIndex} with exception: "
                             + ex);
                     }
                 }

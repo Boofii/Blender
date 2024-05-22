@@ -22,7 +22,7 @@ public static class AssetHelper
             AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
             if (bundle == null)
             {
-                Logger.Warning($"Couldn't find an asset bundle with path {bundlePath}");
+                BlenderAPI.LogWarning($"Couldn't find an asset bundle with path {bundlePath}");
                 return null;
             }
             Bundles.Add(bundleName, bundle);
@@ -40,7 +40,7 @@ public static class AssetHelper
             return;
         }
 
-        Logger.Warning($"Couldn't find an asset bundle with name {bundleName}");
+        BlenderAPI.LogWarning($"Couldn't find an asset bundle with name {bundleName}");
     }
 
     public static bool TryGetBundle(string bundleName, out AssetBundle bundle)
@@ -52,7 +52,7 @@ public static class AssetHelper
             return true;
         }
 
-        Logger.Warning($"Couldn't find an asset bundle with name {bundleName}");
+        BlenderAPI.LogWarning($"Couldn't find an asset bundle with name {bundleName}");
         return false;
     }
 
@@ -67,7 +67,7 @@ public static class AssetHelper
             return true;
         }
 
-        Logger.Warning($"Couldn't find an asset with path {assetPath}");
+        BlenderAPI.LogWarning($"Couldn't find an asset with path {assetPath}");
         return false;
     }
 
@@ -87,7 +87,7 @@ public static class AssetHelper
             return asset;
         }
 
-        Logger.Warning($"Failed to cache an asset with path {assetPath}");
+        BlenderAPI.LogWarning($"Failed to cache an asset with path {assetPath}");
         return default;
     }
 
