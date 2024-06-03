@@ -3,10 +3,8 @@ using BepInEx.Logging;
 using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
-using CupAPI.Content;
 using CupAPI.Patching;
 using HarmonyLib;
-using UnityEngine;
 
 namespace Blender;
 
@@ -16,30 +14,43 @@ internal class BlenderAPI : BaseUnityPlugin
 
     internal static readonly Harmony Harmony = new(PluginInfo.PLUGIN_GUID);
     private static new ManualLogSource Logger = null;
-    //private static Weapon Pellet;
 
     private void Awake()
     {
         base.Logger.LogInfo($"Blender v{PluginInfo.PLUGIN_VERSION} was initialized.");
         BlenderAPI.Logger = base.Logger;
 
-        AssetHelper.CacheAsset<GameObject>("blender_core", "Empty");
-        AssetHelper.CacheAsset<GameObject>("blender_core", "Pellet");
-
         CustomData.Initialize(Harmony);
         EnumPatcher.Initialize(Harmony);
         EquipMenuPatcher.Initialize(Harmony);
         PropertiesPatcher.Initialize(Harmony);
 
-        EquipRegistries.Charms.Register("charm_float", new FloatCharm());
+        EquipRegistries.Charms.Register("charm_float", new EquipInfo()
+            .SetDisplayName("Float")
+            .SetSubtext("Fall Slowly")
+            .SetDescription("Allows you to fall slowly when holding the jump button.")
+            .SetBundleName("blender_content")
+            .SetNormalIcons(["float0", "float1", "float2"]));
+
+        /*EquipRegistries.Weapons.Register("level_weapon_pellet",
+            (WeaponInfo)new WeaponInfo(typeof(WeaponPellet), typeof(BasicProjectile), "Pellet")
+                .SetDisplayName("Pellet")
+                .SetSubtext("EX: Big Pellet")
+                .SetDescription("Long range with below-average damage.")
+                .SetBundleName("blender_content")
+                .SetNormalIcons(["pellet0","pellet1","pellet2"])
+                .SetGreyIcons(["pellet_grey0","pellet_grey1","pellet_grey2"]));
 
         CustomData.DataLoadedEvent += delegate
         {
             Charm floatCharm = Charm.charm_float;
+            Weapon pelletWeapon = (Weapon)Enum.Parse(typeof(Weapon), "level_weapon_pellet");
             PlayerData.Data.Gift(PlayerId.PlayerOne, floatCharm);
             PlayerData.Data.Gift(PlayerId.PlayerTwo, floatCharm);
+            PlayerData.Data.Gift(PlayerId.PlayerOne, pelletWeapon);
+            PlayerData.Data.Gift(PlayerId.PlayerTwo, pelletWeapon);
             PlayerData.SaveCurrentFile();
-        };
+        };*/
 
         /*Harmony.PatchAll(typeof(Initializer));
         EnumRegistry<Weapon> registry = EnumManager.Register<Weapon>();
@@ -92,7 +103,6 @@ internal class BlenderAPI : BaseUnityPlugin
                 renderer.sortingLayerName = "Projectiles";
                 print(renderer.sprite.name);
                 print(renderer.sprite.uv);
-
 
                 Traverse traverse = Traverse.Create(weapon);
                 traverse.Field<AbstractProjectile>("basicPrefab").Value = projectile;

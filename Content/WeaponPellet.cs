@@ -11,11 +11,11 @@ public class WeaponPellet : AbstractLevelWeapon
 
     private int currentY;
 
-    protected override bool rapidFire => WeaponProperties.LevelWeaponPeashot.Basic.rapidFire;
+    public override bool rapidFire => WeaponProperties.LevelWeaponPeashot.Basic.rapidFire;
 
-    protected override float rapidFireRate => WeaponProperties.LevelWeaponPeashot.Basic.rapidFireRate;
+    public override float rapidFireRate => WeaponProperties.LevelWeaponPeashot.Basic.rapidFireRate;
 
-    protected override AbstractProjectile fireBasic()
+    public override AbstractProjectile fireBasic()
     {
         BasicProjectile basicProjectile = base.fireBasic() as BasicProjectile;
         basicProjectile.Speed = WeaponProperties.LevelWeaponPeashot.Basic.speed;
@@ -34,7 +34,7 @@ public class WeaponPellet : AbstractLevelWeapon
         return basicProjectile;
     }
 
-    protected override AbstractProjectile fireEx()
+    public override AbstractProjectile fireEx()
     {
         WeaponPeashotExProjectile weaponPeashotExProjectile = base.fireEx() as WeaponPeashotExProjectile;
         weaponPeashotExProjectile.moveSpeed = WeaponProperties.LevelWeaponPeashot.Ex.speed;

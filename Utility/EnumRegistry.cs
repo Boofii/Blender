@@ -23,8 +23,8 @@ namespace Blender.Utility {
         public void Register(string name) {
             if (Enum.IsDefined(typeof(TEnum), name))
                 return;
-            if (!namesAndIds.ContainsKey(name)) {
-                int id = this.LargestId() + 1;
+            if (!namesAndIds.ContainsKey(name) && !Enum.IsDefined(typeof(TEnum), name)) {
+                int id = this.CurrentId + 1;
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
             }
@@ -58,12 +58,16 @@ namespace Blender.Utility {
             return namesAndIds.Values.ToList();
         }
 
-        private int LargestId() {
-            int result = 0;
-            foreach (int intValue in Enum.GetValues(typeof(TEnum)))
-                if (intValue > result && intValue != int.MaxValue)
-                    result = intValue;
-            return result;
+        private int CurrentId
+        {
+            get
+            {
+                int result = 0;
+                foreach (int intValue in Enum.GetValues(typeof(TEnum)))
+                    if (intValue > result && intValue != int.MaxValue)
+                        result = intValue;
+                return result;
+            }
         }
     }
 }

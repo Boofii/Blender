@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using UnityEngine;
 
 namespace Blender.Utility;
 
@@ -10,30 +13,30 @@ public class LinkedRegistry<TEnum, TValue> where TEnum : Enum
     private readonly EnumRegistry<TEnum> enumRegistry;
     private readonly Dictionary<string, TValue> namesAndValues = [];
     private readonly Dictionary<TValue, string> valuesAndNames = [];
-    private readonly Action<string, TValue> RegisteredEvent;
+    private readonly Action<string, string, TValue> registeredEvent;
 
     public LinkedRegistry()
     {
         this.enumRegistry = EnumManager.Register<TEnum>();
     }
 
-    public LinkedRegistry(Action<string, TValue> registeredEvent)
+    public LinkedRegistry(Action<string, string, TValue> registeredEvent)
     {
         this.enumRegistry = EnumManager.Register<TEnum>();
-        this.RegisteredEvent = registeredEvent;
+        this.registeredEvent = registeredEvent;
     }
 
     public void Register(string name, TValue value)
     {
-        if (enumRegistry == null)
-            return;
-        if (!namesAndValues.ContainsKey(name))
+        if (!namesAndValues.ContainsKey(name) && enumRegistry != null)
         {
             enumRegistry.Register(name);
             namesAndValues[name] = value;
             valuesAndNames[value] = name;
 
-            RegisteredEvent?.Invoke(name, value);
+            string modName = Path.GetFileName
+                (Path.GetDirectoryName(Assembly.GetCallingAssembly().Location));
+            registeredEvent?.Invoke(name, modName, value);
         }
     }
 

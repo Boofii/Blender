@@ -1,8 +1,7 @@
-﻿using Blender.Utility;
-using CupAPI.Content;
+﻿using Blender.Content;
+using Blender.Utility;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection.Emit;
 using UnityEngine;
 
@@ -11,12 +10,11 @@ namespace CupAPI.Patching;
 [HarmonyPatch(typeof(WeaponProperties))]
 internal static class PropertiesPatcher
 {
-
     [HarmonyPatch(nameof(WeaponProperties.GetDisplayName), [typeof(Charm)])]
     [HarmonyPrefix]
     private static bool Patch_GetDisplayName(Charm charm, ref string __result)
     {
-        IEquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
+        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
         if (charmInfo != null)
         {
             __result = charmInfo.DisplayName;
@@ -29,7 +27,7 @@ internal static class PropertiesPatcher
     [HarmonyPrefix]
     private static bool Patch_GetSubtext(Charm charm, ref string __result)
     {
-        IEquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
+        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
         if (charmInfo != null)
         {
             __result = charmInfo.Subtext;
@@ -42,7 +40,7 @@ internal static class PropertiesPatcher
     [HarmonyPrefix]
     private static bool Patch_GetDescription(Charm charm, ref string __result)
     {
-        IEquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
+        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
         if (charmInfo != null)
         {
             __result = charmInfo.Description;
@@ -58,6 +56,57 @@ internal static class PropertiesPatcher
         if (EquipRegistries.Charms.ContainsName(charm.ToString()))
         {
             __result = charm.ToString();
+            return false;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(nameof(WeaponProperties.GetDisplayName), [typeof(Weapon)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetDisplayName1(Weapon weapon, ref string __result)
+    {
+        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
+        if (weaponInfo != null)
+        {
+            __result = weaponInfo.DisplayName;
+            return false;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(nameof(WeaponProperties.GetSubtext), [typeof(Weapon)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetSubtext1(Weapon weapon, ref string __result)
+    {
+        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
+        if (weaponInfo != null)
+        {
+            __result = weaponInfo.Subtext;
+            return false;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(nameof(WeaponProperties.GetDescription), [typeof(Weapon)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetDescription1(Weapon weapon, ref string __result)
+    {
+        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
+        if (weaponInfo != null)
+        {
+            __result = weaponInfo.Description;
+            return false;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(nameof(WeaponProperties.GetIconPath), [typeof(Weapon)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetIconPath1(Weapon weapon, ref string __result)
+    {
+        if (EquipRegistries.Weapons.ContainsName(weapon.ToString()))
+        {
+            __result = weapon.ToString();
             return false;
         }
         return true;
@@ -91,10 +140,20 @@ internal static class PropertiesPatcher
     {
         if (EquipRegistries.Charms.ContainsName(iconPath))
         {
-            IEquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
+            EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
             foreach (string icon in charmInfo.NormalIcons)
             {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>(charmInfo.BundleName, icon);
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
+                if (sprite != null)
+                    list.Add(sprite);
+            }
+        }
+        else if (EquipRegistries.Weapons.ContainsName(iconPath))
+        {
+            EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
+            foreach (string icon in weaponInfo.NormalIcons)
+            {
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>(weaponInfo.BundleName, "", icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
@@ -105,10 +164,20 @@ internal static class PropertiesPatcher
     {
         if (EquipRegistries.Charms.ContainsName(iconPath))
         {
-            IEquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
+            EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
             foreach (string icon in charmInfo.GreyIcons)
             {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>(charmInfo.BundleName, icon);
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>(charmInfo.BundleName, "", icon);
+                if (sprite != null)
+                    list.Add(sprite);
+            }
+        }
+        else if (EquipRegistries.Weapons.ContainsName(iconPath))
+        {
+            EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
+            foreach (string icon in weaponInfo.GreyIcons)
+            {
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>(weaponInfo.BundleName, "", icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
