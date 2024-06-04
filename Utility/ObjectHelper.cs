@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Blender.Utility;
 
-public static class AssetHelper
+public static class ObjectHelper
 {
 
     private static readonly Dictionary<string, AssetBundle> Bundles = [];
     private static readonly Dictionary<string, Object> Assets = [];
+    private static GameObject PrefabHolder { get; set; }
 
     public static AssetBundle LoadBundle(string modName, string bundleName)
     {
@@ -98,6 +100,41 @@ public static class AssetHelper
         return default;
     }
 
+    public static T CacheAndSave<T>(string modName, string bundleName, string path) where T : Object
+    {
+        string assetPath = $"{bundleName}:{path}";
+
+        T asset = CacheAsset<T>(modName, bundleName, path);
+        if (asset is not GameObject obj)
+            BlenderAPI.LogError($"Tried to save an asset with path {assetPath} "
+                + "that wasn't a GameObject.");
+        else
+            AddPrefab(obj);
+
+        return asset;
+    }
+
+    public static GameObject AddPrefab(GameObject prefab)
+    {
+        if (GetPrefab(prefab.name) != null)
+            BlenderAPI.LogWarning($"Tried to add a prefab that already existed " +
+                $"with name {prefab.name}.");
+
+        prefab.transform.SetParent(PrefabHolder.transform);
+        return prefab;
+    }
+
+    public static GameObject GetPrefab(string name)
+    {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        if (prefab == null)
+        {
+            BlenderAPI.LogWarning($"Couldn't find a prefab with name {name}.");
+            return null;
+        }
+        return prefab.gameObject;
+    }
+
     public static bool ContainsBundle(string bundleName)
     {
         return Bundles.ContainsKey(bundleName);
@@ -116,5 +153,12 @@ public static class AssetHelper
     public static List<Object> GetAssets()
     {
         return Assets.Values.ToList();
+    }
+
+    internal static void Initialize()
+    {
+        PrefabHolder = new GameObject("PrefabHolder");
+        GameObject.DontDestroyOnLoad(PrefabHolder);
+        PrefabHolder.SetActive(false);
     }
 }

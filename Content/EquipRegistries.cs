@@ -32,12 +32,12 @@ public static class EquipRegistries
             pagesDict[1] = firstPageValues;
 
         foreach (string icon in info.NormalIcons)
-            AssetHelper.CacheAsset<Sprite>(modName, info.BundleName, icon);
+            ObjectHelper.CacheAsset<Sprite>(modName, info.BundleName, icon);
         foreach (string icon in info.GreyIcons)
-            AssetHelper.CacheAsset<Sprite>(modName, info.BundleName, icon);
+            ObjectHelper.CacheAsset<Sprite>(modName, info.BundleName, icon);
 
         if (info is WeaponInfo weaponInfo)
-            HandleWeapons(name, weaponInfo);
+            HandleWeapons(name, modName, weaponInfo);
 
         int count = 1;
         foreach (var pageValues in pagesDict.Values)
@@ -58,18 +58,19 @@ public static class EquipRegistries
         array[index] = (TEnum)Enum.Parse(typeof(TEnum), name);
     }
 
-    private static void HandleWeapons(string name, WeaponInfo info)
+    private static void HandleWeapons(string name, string modName, WeaponInfo info)
     {
-        /*GameObject weapon = AssetHelper.CacheAsset<GameObject>(info.BundleName, name);
-        GameObject projectile = AssetHelper.CacheAsset<GameObject>(info.BundleName, info.ProjectileName);
+        GameObject weapon = new GameObject(name);
+        ObjectHelper.AddPrefab(weapon);
+        GameObject projectile = ObjectHelper.CacheAsset<GameObject>(modName, info.BundleName, info.ProjectileName);
 
-        if (!info.WeaponType.IsAssignableFrom(typeof(AbstractLevelWeapon)))
+        if (!info.WeaponType.IsSubclassOf(typeof(AbstractLevelWeapon)))
         {
             BlenderAPI.LogError($"Couldn't register weapon {name} because its weapon type " +
                 "is not of type AbstractLevelWeapon.");
             return;
         }
-        if (!info.ProjectileType.IsAssignableFrom(typeof(AbstractProjectile)))
+        if (!info.ProjectileType.IsSubclassOf(typeof(AbstractProjectile)))
         {
             BlenderAPI.LogError($"Couldn't register weapon {name} because its projectile type " +
                 "is not of type AbstractProjectile.");
@@ -78,8 +79,13 @@ public static class EquipRegistries
 
         AbstractLevelWeapon weaponComponent = (AbstractLevelWeapon)weapon.AddComponent(info.WeaponType);
         AbstractProjectile projectileComponent = (AbstractProjectile)projectile.AddComponent(info.ProjectileType);
+        
         SpriteRenderer renderer = projectile.GetComponent<SpriteRenderer>();
         if (renderer != null)
-            renderer.sortingLayerName = "Projectiles";*/
+            renderer.sortingLayerName = "Projectiles";
+        projectile.tag = "PlayerProjectile";
+        projectile.layer = LayerMask.NameToLayer("Projectile");
+
+        weaponComponent.basicPrefab = projectileComponent;
     }
 }

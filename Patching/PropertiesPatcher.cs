@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using UnityEngine;
 
-namespace CupAPI.Patching;
+namespace Blender.Patching;
 
 [HarmonyPatch(typeof(WeaponProperties))]
 internal static class PropertiesPatcher
@@ -143,7 +143,7 @@ internal static class PropertiesPatcher
             EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
             foreach (string icon in charmInfo.NormalIcons)
             {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
+                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
@@ -153,7 +153,7 @@ internal static class PropertiesPatcher
             EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
             foreach (string icon in weaponInfo.NormalIcons)
             {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>(weaponInfo.BundleName, "", icon);
+                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
@@ -162,22 +162,12 @@ internal static class PropertiesPatcher
 
     private static void AddGreySprites(string iconPath, List<Sprite> list)
     {
-        if (EquipRegistries.Charms.ContainsName(iconPath))
-        {
-            EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
-            foreach (string icon in charmInfo.GreyIcons)
-            {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>(charmInfo.BundleName, "", icon);
-                if (sprite != null)
-                    list.Add(sprite);
-            }
-        }
-        else if (EquipRegistries.Weapons.ContainsName(iconPath))
+        if (EquipRegistries.Weapons.ContainsName(iconPath))
         {
             EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
             foreach (string icon in weaponInfo.GreyIcons)
             {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>(weaponInfo.BundleName, "", icon);
+                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }

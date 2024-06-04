@@ -36,6 +36,7 @@ public class LinkedRegistry<TEnum, TValue> where TEnum : Enum
 
             string modName = Path.GetFileName
                 (Path.GetDirectoryName(Assembly.GetCallingAssembly().Location));
+
             registeredEvent?.Invoke(name, modName, value);
         }
     }

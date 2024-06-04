@@ -3,23 +3,19 @@
 public class WeaponPellet : AbstractLevelWeapon
 {
 
-    private const float Y_POS = 20f;
-
-    private const float ROTATION_OFFSET = 3f;
-
-    private float[] yPositions = new float[4] { 0f, 20f, 40f, 20f };
+    private readonly float[] yPositions = new float[8] { 0f, 20f, 40f, 60F, 80F, 60F, 40F, 20F };
 
     private int currentY;
 
-    public override bool rapidFire => WeaponProperties.LevelWeaponPeashot.Basic.rapidFire;
+    public override bool rapidFire => true;
 
-    public override float rapidFireRate => WeaponProperties.LevelWeaponPeashot.Basic.rapidFireRate;
+    public override float rapidFireRate => 0.10F;
 
     public override AbstractProjectile fireBasic()
     {
         BasicProjectile basicProjectile = base.fireBasic() as BasicProjectile;
-        basicProjectile.Speed = WeaponProperties.LevelWeaponPeashot.Basic.speed;
-        basicProjectile.Damage = WeaponProperties.LevelWeaponPeashot.Basic.damage;
+        basicProjectile.Speed = 1125F;
+        basicProjectile.Damage = 5F;
         basicProjectile.PlayerId = player.id;
         basicProjectile.DamagesType.PlayerProjectileDefault();
         basicProjectile.CollisionDeath.PlayerProjectileDefault();

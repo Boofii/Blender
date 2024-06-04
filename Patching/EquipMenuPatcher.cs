@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace CupAPI.Patching;
+namespace Blender.Patching;
 
 [HarmonyPatch(typeof(MapEquipUICardBackSelect))]
 internal static class EquipMenuPatcher
