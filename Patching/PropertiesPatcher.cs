@@ -143,7 +143,7 @@ internal static class PropertiesPatcher
             EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
             foreach (string icon in charmInfo.NormalIcons)
             {
-                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
@@ -153,7 +153,7 @@ internal static class PropertiesPatcher
             EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
             foreach (string icon in weaponInfo.NormalIcons)
             {
-                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }
@@ -167,7 +167,7 @@ internal static class PropertiesPatcher
             EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
             foreach (string icon in weaponInfo.GreyIcons)
             {
-                Sprite sprite = ObjectHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
+                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
                 if (sprite != null)
                     list.Add(sprite);
             }

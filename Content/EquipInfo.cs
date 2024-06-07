@@ -45,4 +45,9 @@ public class EquipInfo
         this.GreyIcons = greyIcons;
         return this;
     }
+
+    public WeaponInfo AsWeaponInfo()
+    {
+        return this as WeaponInfo;
+    }
 }

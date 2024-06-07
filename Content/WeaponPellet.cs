@@ -32,16 +32,15 @@ public class WeaponPellet : AbstractLevelWeapon
 
     public override AbstractProjectile fireEx()
     {
-        WeaponPeashotExProjectile weaponPeashotExProjectile = base.fireEx() as WeaponPeashotExProjectile;
-        weaponPeashotExProjectile.moveSpeed = WeaponProperties.LevelWeaponPeashot.Ex.speed;
-        weaponPeashotExProjectile.Damage = WeaponProperties.LevelWeaponPeashot.Ex.damage;
-        weaponPeashotExProjectile.hitFreezeTime = WeaponProperties.LevelWeaponPeashot.Ex.freezeTime;
-        weaponPeashotExProjectile.DamageRate = weaponPeashotExProjectile.hitFreezeTime + WeaponProperties.LevelWeaponPeashot.Ex.damageDistance / weaponPeashotExProjectile.moveSpeed;
-        weaponPeashotExProjectile.maxDamage = WeaponProperties.LevelWeaponPeashot.Ex.maxDamage;
-        weaponPeashotExProjectile.PlayerId = player.id;
+        BasicProjectile basicProjectile = base.fireEx() as BasicProjectile;
+        basicProjectile.Speed = 1125F;
+        basicProjectile.Damage = 10F;
+        basicProjectile.PlayerId = player.id;
+        basicProjectile.DamagesType.PlayerProjectileDefault();
+        basicProjectile.CollisionDeath.PlayerProjectileDefault();
         MeterScoreTracker meterScoreTracker = new MeterScoreTracker(MeterScoreTracker.Type.Ex);
-        meterScoreTracker.Add(weaponPeashotExProjectile);
-        return weaponPeashotExProjectile;
+        meterScoreTracker.Add(basicProjectile);
+        return basicProjectile;
     }
 
     public override void BeginBasic()

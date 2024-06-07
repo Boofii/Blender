@@ -1,11 +1,13 @@
 ﻿using HarmonyLib;
 using Blender.Utility;
 using UnityEngine;
+using Blender.Content;
+using static LevelProperties.SallyStagePlay;
 
 namespace Blender.Patching;
 
 [HarmonyPatch(typeof(LevelPlayerWeaponManager.WeaponPrefabs))]
-internal static class WeaponPrefabsPatcher
+internal static class PrefabsPatcher
 {
 
     [HarmonyPatch(nameof(LevelPlayerWeaponManager.WeaponPrefabs.InitWeapon))]
@@ -15,14 +17,6 @@ internal static class WeaponPrefabsPatcher
         AbstractLevelWeapon abstractLevelWeapon;
         switch (id)
         {
-            default:
-                GameObject prefab = ObjectHelper.GetPrefab(id.ToString());
-                if (prefab != null)
-                {
-                    abstractLevelWeapon = prefab.GetComponent<AbstractLevelWeapon>();
-                    break;
-                }
-                return false;
             case Weapon.level_weapon_peashot:
                 abstractLevelWeapon = __instance.peashot;
                 break;
@@ -56,9 +50,20 @@ internal static class WeaponPrefabsPatcher
             case Weapon.level_weapon_crackshot:
                 abstractLevelWeapon = __instance.crackshot;
                 break;
+            default:
+                if (EquipRegistries.Weapons.ContainsName(id.ToString()))
+                {
+                    GameObject prefab = AssetHelper.GetPrefab(id.ToString());
+                    if (prefab != null)
+                    {
+                        abstractLevelWeapon = prefab.GetComponent<AbstractLevelWeapon>();
+                        break;
+                    }
+                }
+                return false;
         }
 
-        if (!(abstractLevelWeapon == null))
+        if (abstractLevelWeapon != null)
         {
             AbstractLevelWeapon abstractLevelWeapon2 = UnityEngine.Object.Instantiate(abstractLevelWeapon);
             abstractLevelWeapon2.transform.parent = __instance.root.transform;
@@ -72,6 +77,6 @@ internal static class WeaponPrefabsPatcher
 
     internal static void Initialize(Harmony harmony)
     {
-        harmony.PatchAll(typeof(WeaponPrefabsPatcher));
+        harmony.PatchAll(typeof(PrefabsPatcher));
     }
 }

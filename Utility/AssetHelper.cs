@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Blender.Utility;
 
-public static class ObjectHelper
+public static class AssetHelper
 {
 
     private static readonly Dictionary<string, AssetBundle> Bundles = [];

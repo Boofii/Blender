@@ -5,6 +5,7 @@ using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
 using System;
+using UnityEngine;
 
 namespace Blender;
 
@@ -17,24 +18,26 @@ internal class BlenderAPI : BaseUnityPlugin
 
     private void Awake()
     {
-        base.Logger.LogInfo($"Blender v{PluginInfo.PLUGIN_VERSION} was initialized.");
+        base.Logger.LogInfo($"Blender v{PluginInfo.PLUGIN_VERSION} was loaded.");
         BlenderAPI.Logger = base.Logger;
 
         CustomData.Initialize(Harmony);
         EnumPatcher.Initialize(Harmony);
         EquipMenuPatcher.Initialize(Harmony);
         PropertiesPatcher.Initialize(Harmony);
-        WeaponPrefabsPatcher.Initialize(Harmony);
-        ObjectHelper.Initialize();
+        PrefabsPatcher.Initialize(Harmony);
+        AssetHelper.Initialize();
 
         EquipRegistries.Weapons.Register("level_weapon_pellet",
-            (WeaponInfo)new WeaponInfo(typeof(WeaponPellet), typeof(BasicProjectile), "Pellet")
+            new WeaponInfo(typeof(WeaponPellet), typeof(BasicProjectile),
+                typeof(BasicProjectile), "Pellet", "PelletEX")
                 .SetDisplayName("Pellet")
                 .SetSubtext("EX: Big Pellet")
                 .SetDescription("Long range with below-average damage.")
                 .SetBundleName("blender_content")
-                .SetNormalIcons(["pellet0","pellet1","pellet2"])
-                .SetGreyIcons(["pellet_grey0","pellet_grey1","pellet_grey2"]));
+                .SetNormalIcons(["pellet0", "pellet1", "pellet2"])
+                .SetGreyIcons(["pellet_grey0", "pellet_grey1", "pellet_grey2"])
+                .AsWeaponInfo());
 
         CustomData.DataLoadedEvent += delegate
         {
