@@ -4,8 +4,6 @@ using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
-using System;
-using UnityEngine;
 
 namespace Blender;
 
@@ -24,28 +22,20 @@ internal class BlenderAPI : BaseUnityPlugin
         CustomData.Initialize(Harmony);
         EnumPatcher.Initialize(Harmony);
         EquipMenuPatcher.Initialize(Harmony);
-        PropertiesPatcher.Initialize(Harmony);
+        IconPatcher.Initialize(Harmony);
         PrefabsPatcher.Initialize(Harmony);
+        LocalizationPatcher.Initialize(Harmony);
+        EquipRegistries.Initialize();
         AssetHelper.Initialize();
 
-        EquipRegistries.Weapons.Register("level_weapon_pellet",
-            new WeaponInfo(typeof(WeaponPellet), typeof(BasicProjectile),
-                typeof(BasicProjectile), "Pellet", "PelletEX")
-                .SetDisplayName("Pellet")
-                .SetSubtext("EX: Big Pellet")
-                .SetDescription("Long range with below-average damage.")
-                .SetBundleName("blender_content")
-                .SetNormalIcons(["pellet0", "pellet1", "pellet2"])
-                .SetGreyIcons(["pellet_grey0", "pellet_grey1", "pellet_grey2"])
-                .AsWeaponInfo());
-
-        CustomData.DataLoadedEvent += delegate
-        {
-            Weapon pelletWeapon = (Weapon)Enum.Parse(typeof(Weapon), "level_weapon_pellet");
-            PlayerData.Data.Gift(PlayerId.PlayerOne, pelletWeapon);
-            PlayerData.Data.Gift(PlayerId.PlayerTwo, pelletWeapon);
-            PlayerData.SaveCurrentFile();
-        };
+        EquipRegistries.Weapons.Register("level_weapon_spark", new WeaponInfo(typeof(WeaponSpark))
+            .SetBasicName("Spark")
+            .SetExName("SparkEX")
+            .SetBasicEffectName("Effect")
+            .SetBundleName("extraweapons")
+            .SetNormalIcons(["spark0", "spark1", "spark2"])
+            .SetGreyIcons(["sprak_grey0", "spark_grey1", "spark_grey2"])
+            .AsWeaponInfo());
     }
 
     internal static void LogInfo(string message)

@@ -8,50 +8,11 @@ using UnityEngine;
 namespace Blender.Patching;
 
 [HarmonyPatch(typeof(WeaponProperties))]
-internal static class PropertiesPatcher
+internal static class IconPatcher
 {
-    [HarmonyPatch(nameof(WeaponProperties.GetDisplayName), [typeof(Charm)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetDisplayName(Charm charm, ref string __result)
-    {
-        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
-        if (charmInfo != null)
-        {
-            __result = charmInfo.DisplayName;
-            return false;
-        }
-        return true;
-    }
-
-    [HarmonyPatch(nameof(WeaponProperties.GetSubtext), [typeof(Charm)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetSubtext(Charm charm, ref string __result)
-    {
-        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
-        if (charmInfo != null)
-        {
-            __result = charmInfo.Subtext;
-            return false;
-        }
-        return true;
-    }
-
-    [HarmonyPatch(nameof(WeaponProperties.GetDescription), [typeof(Charm)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetDescription(Charm charm, ref string __result)
-    {
-        EquipInfo charmInfo = EquipRegistries.Charms.GetValue(charm.ToString());
-        if (charmInfo != null)
-        {
-            __result = charmInfo.Description;
-            return false;
-        }
-        return true;
-    }
-
     [HarmonyPatch(nameof(WeaponProperties.GetIconPath), [typeof(Charm)])]
     [HarmonyPrefix]
-    private static bool Patch_GetIconPath(Charm charm, ref string __result)
+    private static bool Patch_GetIconPath_Charm(Charm charm, ref string __result)
     {
         if (EquipRegistries.Charms.ContainsName(charm.ToString()))
         {
@@ -61,48 +22,9 @@ internal static class PropertiesPatcher
         return true;
     }
 
-    [HarmonyPatch(nameof(WeaponProperties.GetDisplayName), [typeof(Weapon)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetDisplayName1(Weapon weapon, ref string __result)
-    {
-        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
-        if (weaponInfo != null)
-        {
-            __result = weaponInfo.DisplayName;
-            return false;
-        }
-        return true;
-    }
-
-    [HarmonyPatch(nameof(WeaponProperties.GetSubtext), [typeof(Weapon)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetSubtext1(Weapon weapon, ref string __result)
-    {
-        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
-        if (weaponInfo != null)
-        {
-            __result = weaponInfo.Subtext;
-            return false;
-        }
-        return true;
-    }
-
-    [HarmonyPatch(nameof(WeaponProperties.GetDescription), [typeof(Weapon)])]
-    [HarmonyPrefix]
-    private static bool Patch_GetDescription1(Weapon weapon, ref string __result)
-    {
-        EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(weapon.ToString());
-        if (weaponInfo != null)
-        {
-            __result = weaponInfo.Description;
-            return false;
-        }
-        return true;
-    }
-
     [HarmonyPatch(nameof(WeaponProperties.GetIconPath), [typeof(Weapon)])]
     [HarmonyPrefix]
-    private static bool Patch_GetIconPath1(Weapon weapon, ref string __result)
+    private static bool Patch_GetIconPath_Weapon(Weapon weapon, ref string __result)
     {
         if (EquipRegistries.Weapons.ContainsName(weapon.ToString()))
         {
@@ -129,9 +51,9 @@ internal static class PropertiesPatcher
                 yield return new CodeInstruction(OpCodes.Ldloc_1);
 
                 if (i == firstBltIndex)
-                    yield return CodeInstruction.Call(typeof(PropertiesPatcher), nameof(AddNormalSprites));
+                    yield return CodeInstruction.Call(typeof(IconPatcher), nameof(AddNormalSprites));
                 else if (i == lastBltIndex)
-                    yield return CodeInstruction.Call(typeof(PropertiesPatcher), nameof(AddGreySprites));
+                    yield return CodeInstruction.Call(typeof(IconPatcher), nameof(AddGreySprites));
             }
         }
     }
@@ -176,6 +98,6 @@ internal static class PropertiesPatcher
 
     internal static void Initialize(Harmony harmony)
     {
-        harmony.PatchAll(typeof(PropertiesPatcher));
+        harmony.PatchAll(typeof(IconPatcher));
     }
 }

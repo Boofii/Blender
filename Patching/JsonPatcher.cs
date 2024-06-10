@@ -9,7 +9,6 @@ namespace Blender.Patching;
 [HarmonyPatch(typeof(JsonUtility))]
 internal static class JsonPatcher
 {
-
     private static int saveIndex = 0;
 
     [HarmonyPatch(nameof(JsonUtility.ToJson), [typeof(object)])]

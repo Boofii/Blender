@@ -2,7 +2,6 @@
 using Blender.Utility;
 using UnityEngine;
 using Blender.Content;
-using static LevelProperties.SallyStagePlay;
 
 namespace Blender.Patching;
 

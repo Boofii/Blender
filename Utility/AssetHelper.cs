@@ -8,26 +8,39 @@ namespace Blender.Utility;
 
 public static class AssetHelper
 {
-
     private static readonly Dictionary<string, AssetBundle> Bundles = [];
     private static readonly Dictionary<string, Object> Assets = [];
     private static GameObject PrefabHolder { get; set; }
+
+    public static string LoadFile(string modName, string path)
+    {
+        string modDir = Path.Combine(Paths.PluginPath, modName);
+        string assetsPath = Path.Combine(modDir, "Assets");
+        string filePath = Path.Combine(assetsPath, path);
+        if (!File.Exists(filePath))
+        {
+            BlenderAPI.LogWarning($"Couldn't find a file with path {filePath}.");
+            return null;
+        }
+        return filePath;
+    }
 
     public static AssetBundle LoadBundle(string modName, string bundleName)
     {
         if (!Bundles.ContainsKey(bundleName))
         {
-            string modDir = Path.Combine(Paths.PluginPath, modName);
-            string assetsPath = Path.Combine(modDir, "Assets");
-            string bundlePath = Path.Combine(assetsPath, bundleName);
-            AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
-            if (bundle == null)
+            string bundlePath = LoadFile(modName, bundleName);
+            if (bundlePath != null)
             {
-                BlenderAPI.LogWarning($"Couldn't find an asset bundle with path {bundlePath}.");
-                return null;
+                AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
+                if (bundle == null)
+                {
+                    BlenderAPI.LogWarning($"Couldn't find an asset bundle with path {bundlePath}.");
+                    return null;
+                }
+                Bundles.Add(bundleName, bundle);
+                return bundle;
             }
-            Bundles.Add(bundleName, bundle);
-            return bundle;
         }
         return Bundles[bundleName];
     }
@@ -81,6 +94,9 @@ public static class AssetHelper
 
     public static T CacheAsset<T>(string modName, string bundleName, string path) where T : Object
     {
+        if (bundleName == string.Empty || path == string.Empty)
+            return null;
+
         if (TryGetAsset(bundleName, path, out T t))
             return t;
         if (!ContainsBundle(bundleName))
