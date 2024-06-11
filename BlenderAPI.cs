@@ -4,13 +4,14 @@ using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
+using UnityEngine;
 
 namespace Blender;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 internal class BlenderAPI : BaseUnityPlugin
 {
-
+    public static GameObject Cupy { get; private set; }
     internal static readonly Harmony Harmony = new(PluginInfo.PLUGIN_GUID);
     private static new ManualLogSource Logger = null;
 
@@ -36,6 +37,10 @@ internal class BlenderAPI : BaseUnityPlugin
             .SetNormalIcons(["spark0", "spark1", "spark2"])
             .SetGreyIcons(["sprak_grey0", "spark_grey1", "spark_grey2"])
             .AsWeaponInfo());
+
+        Cupy = AssetHelper.CacheAsset<GameObject>("Blender", "extraweapons", "Cupy");
+        SpriteRenderer renderer = Cupy.GetComponent<SpriteRenderer>();
+        renderer.material = new Material(Shader.Find("Sprites/Default"));
     }
 
     internal static void LogInfo(string message)

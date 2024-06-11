@@ -12,11 +12,6 @@ internal static class LocalizationPatcher
 {
     private static readonly List<TranslationElement> Elements = [];
 
-    internal static void Initialize(Harmony harmony)
-    {
-        harmony.PatchAll(typeof(LocalizationPatcher));
-    }
-
     private static bool TryGetField<T>(string filePath, Dictionary<string, object> json, string fieldName, out T value)
     {
         value = default;
@@ -118,5 +113,10 @@ internal static class LocalizationPatcher
         {
             return Localization.Instance.m_TranslationElements.Count;
         }
+    }
+
+    internal static void Initialize(Harmony harmony)
+    {
+        harmony.PatchAll(typeof(LocalizationPatcher));
     }
 }
