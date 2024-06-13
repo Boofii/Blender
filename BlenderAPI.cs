@@ -28,19 +28,6 @@ internal class BlenderAPI : BaseUnityPlugin
         LocalizationPatcher.Initialize(Harmony);
         EquipRegistries.Initialize();
         AssetHelper.Initialize();
-
-        EquipRegistries.Weapons.Register("level_weapon_spark", new WeaponInfo(typeof(WeaponSpark))
-            .SetBasicName("Spark")
-            .SetExName("SparkEX")
-            .SetBasicEffectName("Effect")
-            .SetBundleName("extraweapons")
-            .SetNormalIcons(["spark0", "spark1", "spark2"])
-            .SetGreyIcons(["sprak_grey0", "spark_grey1", "spark_grey2"])
-            .AsWeaponInfo());
-
-        Cupy = AssetHelper.CacheAsset<GameObject>("Blender", "extraweapons", "Cupy");
-        SpriteRenderer renderer = Cupy.GetComponent<SpriteRenderer>();
-        renderer.material = new Material(Shader.Find("Sprites/Default"));
     }
 
     internal static void LogInfo(string message)
