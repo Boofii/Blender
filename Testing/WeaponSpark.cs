@@ -1,4 +1,4 @@
-﻿namespace Blender;
+﻿namespace Blender.Testing;
 
 public class WeaponSpark : AbstractLevelWeapon
 {
@@ -13,10 +13,6 @@ public class WeaponSpark : AbstractLevelWeapon
         spark.PlayerId = player.id;
         spark.DamagesType.PlayerProjectileDefault();
         spark.CollisionDeath.PlayerProjectileDefault();
-        player.stats.SuperMeter += 10;
-        player.stats.Health += 1;
-        player.stats.OnSuperChanged();
-        player.stats.OnHealthChanged();
         return spark;
     }
 

@@ -2,17 +2,16 @@
 using BepInEx.Logging;
 using Blender.Content;
 using Blender.Patching;
+using Blender.Testing;
 using Blender.Utility;
 using HarmonyLib;
-using UnityEngine;
 
 namespace Blender;
 
 [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 internal class BlenderAPI : BaseUnityPlugin
 {
-    public static GameObject Cupy { get; private set; }
-    internal static readonly Harmony Harmony = new(PluginInfo.PLUGIN_GUID);
+    private static readonly Harmony Harmony = new(PluginInfo.PLUGIN_GUID);
     private static new ManualLogSource Logger = null;
 
     private void Awake()
@@ -29,18 +28,7 @@ internal class BlenderAPI : BaseUnityPlugin
         EquipRegistries.Initialize();
         AssetHelper.Initialize();
 
-        EquipRegistries.Weapons.Register("level_weapon_spark", new WeaponInfo(typeof(WeaponSpark))
-            .SetBasicName("Spark")
-            .SetExName("SparkEX")
-            .SetBasicEffectName("Effect")
-            .SetBundleName("extraweapons")
-            .SetNormalIcons(["spark0", "spark1", "spark2"])
-            .SetGreyIcons(["sprak_grey0", "spark_grey1", "spark_grey2"])
-            .AsWeaponInfo());
-
-        Cupy = AssetHelper.CacheAsset<GameObject>("Blender", "extraweapons", "Cupy");
-        SpriteRenderer renderer = Cupy.GetComponent<SpriteRenderer>();
-        renderer.material = new Material(Shader.Find("Sprites/Default"));
+        Tester.Initialize(Harmony);
     }
 
     internal static void LogInfo(string message)

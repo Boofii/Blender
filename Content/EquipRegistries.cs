@@ -96,13 +96,14 @@ public static class EquipRegistries
         GameObject basicEffect = AssetHelper.CacheAsset<GameObject>(modName, info.BundleName, info.BasicEffectName);
         if (basicEffect != null)
         {
-            WeaponSparkEffect effect = SetupEffect(basicEffect);
+            WeaponSparkEffect effect = SetupEffect(basicEffect, info.BasicEffectType);
             weaponComponent.basicEffectPrefab = effect;
         }
+
         GameObject exEffect = AssetHelper.CacheAsset<GameObject>(modName, info.BundleName, info.ExEffectName);
         if (exEffect != null)
         {
-            WeaponSparkEffect effect = SetupEffect(exEffect);
+            WeaponSparkEffect effect = SetupEffect(exEffect, info.ExEffectType);
             weaponComponent.exEffectPrefab = effect;
         }
     }
@@ -139,9 +140,9 @@ public static class EquipRegistries
         projectile.gameObject.layer = LayerMask.NameToLayer("Projectile");
     }
 
-    private static WeaponSparkEffect SetupEffect(GameObject effect)
+    private static WeaponSparkEffect SetupEffect(GameObject effect, Type effectType)
     {
-        WeaponSparkEffect effectComponent = effect.AddComponent<WeaponSparkEffect>();
+        WeaponSparkEffect effectComponent = (WeaponSparkEffect)effect.AddComponent(effectType);
         SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
         if (renderer != null)
             renderer.material = new Material(Shader.Find("Sprites/Default"));

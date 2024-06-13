@@ -7,6 +7,8 @@ public class WeaponInfo(Type weaponType) : EquipInfo
     public Type WeaponType { get; private set; } = weaponType;
     public Type BasicType { get; private set; } = typeof(BasicProjectile);
     public Type ExType { get; private set; } = typeof(BasicProjectile);
+    public Type BasicEffectType { get; private set; } = typeof(WeaponSparkEffect);
+    public Type ExEffectType { get; private set; } = typeof(WeaponSparkEffect);
     public string BasicName { get; private set; } = string.Empty;
     public string ExName { get; private set; } = string.Empty;
     public string BasicEffectName { get; private set; } = string.Empty;
@@ -21,6 +23,18 @@ public class WeaponInfo(Type weaponType) : EquipInfo
     public WeaponInfo SetExType(Type exType)
     {
         this.ExType = exType;
+        return this;
+    }
+
+    public WeaponInfo SetBasicEffectType(Type effectType)
+    {
+        this.BasicEffectType = effectType;
+        return this;
+    }
+
+    public WeaponInfo SetExEffectType(Type effectType)
+    {
+        this.ExEffectType = effectType;
         return this;
     }
 
