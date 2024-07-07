@@ -1,7 +1,5 @@
-﻿using BepInEx;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace Blender.Utility;
@@ -9,134 +7,102 @@ namespace Blender.Utility;
 public static class AssetHelper
 {
     private static readonly Dictionary<string, AssetBundle> Bundles = [];
-    private static readonly Dictionary<string, Object> Assets = [];
+    private static readonly Dictionary<string, UnityEngine.Object> Assets = [];
     private static GameObject PrefabHolder { get; set; }
 
-    public static string LoadFile(string modName, string path)
+    public static void LoadBundle(Identifier id, Action<AssetBundle> completionEvent)
     {
-        string modDir = Path.Combine(Paths.PluginPath, modName);
-        string assetsPath = Path.Combine(modDir, "Assets");
-        string filePath = Path.Combine(assetsPath, path);
-        if (!File.Exists(filePath))
-        {
-            BlenderAPI.LogWarning($"Couldn't find a file with path {filePath}.");
-            return null;
-        }
-        return filePath;
-    }
+        if (id == null)
+            return;
 
-    public static AssetBundle LoadBundle(string modName, string bundleName)
-    {
-        if (!Bundles.ContainsKey(bundleName))
+        string str = id.ToString();
+        if (!Bundles.ContainsKey(str) && id.Validate())
         {
-            string bundlePath = LoadFile(modName, bundleName);
-            if (bundlePath != null)
+            var request = AssetBundle.LoadFromFileAsync(id.ActualPath);
+            AssetBundle bundle = request.assetBundle;
+            if (bundle == null)
             {
-                AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
-                if (bundle == null)
-                {
-                    BlenderAPI.LogWarning($"Couldn't find an asset bundle with path {bundlePath}.");
-                    return null;
-                }
-                Bundles.Add(bundleName, bundle);
-                return bundle;
+                BlenderAPI.LogWarning($"Tried to load a bundle that didn't exist with path \"{str}\".");
+                return;
             }
-        }
-        return Bundles[bundleName];
-    }
-
-    public static void UnloadBundle(string bundleName, bool unloadAllLoadedObjects)
-    {
-        if (Bundles.TryGetValue(bundleName, out var bundle))
-        {
-            bundle.Unload(unloadAllLoadedObjects);
-            Bundles.Remove(bundleName);
+            Bundles.Add(str, bundle);
+            completionEvent?.Invoke(bundle);
             return;
         }
-
-        BlenderAPI.LogWarning($"Couldn't find an asset bundle with name {bundleName}.");
+        completionEvent?.Invoke(Bundles[str]);
     }
 
-    public static bool TryGetBundle(string bundleName, out AssetBundle bundle)
+    public static void UnloadBundle(Identifier id, bool unloadAllLoadedObjects)
     {
-        bundle = null;
-        if (Bundles.TryGetValue(bundleName, out var bnd))
+        string str = id.ToString();
+        if (Bundles.TryGetValue(str, out var bundle))
         {
-            bundle = bnd;
-            return true;
+            bundle.Unload(unloadAllLoadedObjects);
+            Bundles.Remove(str);
+            return;
         }
-
-        BlenderAPI.LogWarning($"Couldn't find an asset bundle with name {bundleName}.");
-        return false;
+        BlenderAPI.LogWarning($"A bundle with path \"{str}\" didn't exist in the dictionary.");
     }
 
-    public static bool TryGetAsset<T>(string bundleName, string path, out T asset) where T : Object
+    public static void LoadAsset<T>(Identifier id, string name, Action<T> completionEvent) where T : UnityEngine.Object
     {
-        string assetPath = $"{bundleName}:{path}";
-        asset = default;
+        if (string.IsNullOrEmpty(name) || id == null)
+            return;
 
-        if (!Assets.ContainsKey(assetPath))
+        string str = id.ToString();
+        string assetStr = id.Combine(name).ToString();
+        if (!Assets.ContainsKey(assetStr))
         {
-            BlenderAPI.LogWarning($"Couldn't find an asset with path {assetPath}.");
-            return false;
-        }
+            LoadBundle(id, (bundle) =>
+            {
+                var request = bundle.LoadAssetAsync<T>(name);
+                T asset = (T)request.asset;
+                if (asset == null)
+                {
+                    BlenderAPI.LogWarning($"An asset with path \"{assetStr}\" was null or was not of type \"{typeof(T).Name}\".");
+                    return;
+                }
+                if (asset is GameObject obj)
+                {
+                    SpriteRenderer renderer = obj.GetComponent<SpriteRenderer>();
+                    if (renderer != null)
+                        renderer.material = new Material(Shader.Find("Sprites/Default"));
+                }
 
-        if (Assets.TryGetValue(assetPath, out var asst) && asst is T t)
-        {
-            asset = t;
-            return true;
+                completionEvent?.Invoke(asset);
+                UnloadBundle(id, false);
+            });
+            return;
         }
-
-        BlenderAPI.LogError($"An asset with path {assetPath} couldn't be converted to type " +
-            $"{typeof(T).Name}.");
-        return false;
+        completionEvent?.Invoke((T)Assets[assetStr]);
     }
 
-    public static T CacheAsset<T>(string modName, string bundleName, string path) where T : Object
+    public static void CacheAsset<T>(Identifier id, string name, Action<T> completionEvent) where T : UnityEngine.Object
     {
-        if (bundleName == string.Empty || path == string.Empty)
-            return null;
-
-        if (TryGetAsset(bundleName, path, out T t))
-            return t;
-        if (!ContainsBundle(bundleName))
-            LoadBundle(modName, bundleName);
-
-        string assetPath = $"{bundleName}:{path}";
-        if (TryGetBundle(bundleName, out AssetBundle bundle))
+        LoadAsset<T>(id, name, (asset) =>
         {
-            T asset = bundle.LoadAsset<T>(path);
-            Assets.Add(assetPath, asset);
-            UnloadBundle(bundleName, false);
-            return asset;
-        }
-
-        BlenderAPI.LogWarning($"Failed to cache an asset with path {assetPath}.");
-        return default;
+            string assetStr = id.Combine(name).ToString();
+            Assets[assetStr] = asset;
+            completionEvent?.Invoke(asset);
+        });
     }
 
-    public static T CacheAndSave<T>(string modName, string bundleName, string path) where T : Object
-    {
-        string assetPath = $"{bundleName}:{path}";
-
-        T asset = CacheAsset<T>(modName, bundleName, path);
-        if (asset is not GameObject obj)
-            BlenderAPI.LogError($"Tried to save an asset with path {assetPath} "
-                + "that wasn't a GameObject.");
-        else
-            AddPrefab(obj);
-
-        return asset;
-    }
-
-    public static GameObject AddPrefab(GameObject prefab)
+    public static GameObject AddPrefab(GameObject prefab, bool asClone)
     {
         if (GetPrefab(prefab.name) != null)
-            BlenderAPI.LogWarning($"Tried to add a prefab that already existed " +
-                $"with name {prefab.name}.");
+        {
+            BlenderAPI.LogWarning($"Tried to add a prefab that already existed with name \"{prefab.name}\".");
+            return null;
+        }
 
-        prefab.transform.SetParent(PrefabHolder.transform);
-        return prefab;
+        GameObject newPrefab = prefab;
+        if (asClone)
+        {
+            newPrefab = GameObject.Instantiate(prefab);
+            newPrefab.name = prefab.name;
+        }
+        newPrefab.transform.SetParent(PrefabHolder.transform);
+        return newPrefab;
     }
 
     public static GameObject GetPrefab(string name)
@@ -148,26 +114,6 @@ public static class AssetHelper
             return null;
         }
         return prefab.gameObject;
-    }
-
-    public static bool ContainsBundle(string bundleName)
-    {
-        return Bundles.ContainsKey(bundleName);
-    }
-
-    public static bool ContainsAsset(string bundleName, string path)
-    {
-        return Assets.ContainsKey($"{bundleName}:{path}");
-    }
-
-    public static List<AssetBundle> GetBundles()
-    {
-        return Bundles.Values.ToList();
-    }
-
-    public static List<Object> GetAssets()
-    {
-        return Assets.Values.ToList();
     }
 
     internal static void Initialize()

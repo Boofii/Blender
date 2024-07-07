@@ -11,26 +11,6 @@ public static class CustomData
     internal static readonly Dictionary<int, Dictionary<string, object>> Data = [];
     public static Action DataLoadedEvent { get; set; }
 
-    public static bool TryGet<T>(int slot, string key, out T value) where T : class
-    {
-        value = null;
-        if (Data.TryGetValue(slot, out var customData))
-        {
-            if (customData.TryGetValue(key, out var val))
-                try
-                {
-                    value = SimpleJson.SimpleJson.DeserializeObject<T>(val.ToString());
-                    if (value != null)
-                        return true;
-                }
-                catch (Exception ex) {
-                    BlenderAPI.LogError($"Couldn't deserialize data for slot {slot} and key {key} with exception: " +
-                        ex);
-                }
-        }
-        return false;
-    }
-
     public static object Get(int slot, string key)
     {
         if (Data.TryGetValue(slot, out var customData))

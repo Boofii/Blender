@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using UnityEngine;
 
 namespace Blender.Patching;
 
@@ -27,6 +28,8 @@ internal static class EquipMenuPatcher
                 return ChangePages(__instance, direction, EquipRegistries.WeaponPages, ref ShotAPage, (weapon, id) => PlayerData.Data.IsUnlocked((PlayerId)id, weapon));
             case MapEquipUICard.Slot.SHOT_B:
                 return ChangePages(__instance, direction, EquipRegistries.WeaponPages, ref ShotBPage, (weapon, id) => PlayerData.Data.IsUnlocked((PlayerId)id, weapon));
+            case MapEquipUICard.Slot.SUPER:
+                break;
         }
         return true;
     }
@@ -48,12 +51,13 @@ internal static class EquipMenuPatcher
         if (unlockedCount == 0)
             return true;
 
-        if (index >= 0 && index <= 4 && direction.y == 1 && pagesArray[id] != 1)
+        int switchIndex = BlenderAPI.HasDLC ? 5 : 3;
+        if (index >= 0 && index <= switchIndex - 1 && direction.y == 1 && pagesArray[id] != 1)
         {
             pagesArray[id]--;
             pageChanged = true;
         }
-        else if (index >= 5 && index <= 8 && direction.y == -1 && pagesArray[id] != pageCount)
+        else if (index >= switchIndex && direction.y == -1 && pagesArray[id] != pageCount)
         {
             pagesArray[id]++;
             pageChanged = true;

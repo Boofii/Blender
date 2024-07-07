@@ -8,11 +8,37 @@ using UnityEngine;
 namespace Blender.Patching;
 
 [HarmonyPatch(typeof(WeaponProperties))]
-internal static class IconPatcher
+internal static class DetailsPatcher
 {
+    [HarmonyPatch(nameof(WeaponProperties.GetValue), [typeof(Charm)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetCharmCost(Charm charm, ref int __result)
+    {
+        if (EquipRegistries.Charms.ContainsName(charm.ToString()))
+        {
+            EquipInfo info = EquipRegistries.Charms.GetValue(charm.ToString());
+            __result = info.Cost;
+            return false;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(nameof(WeaponProperties.GetValue), [typeof(Weapon)])]
+    [HarmonyPrefix]
+    private static bool Patch_GetWeaponCost(Weapon weapon, ref int __result)
+    {
+        if (EquipRegistries.Weapons.ContainsName(weapon.ToString()))
+        {
+            EquipInfo info = EquipRegistries.Weapons.GetValue(weapon.ToString());
+            __result = info.Cost;
+            return false;
+        }
+        return true;
+    }
+
     [HarmonyPatch(nameof(WeaponProperties.GetIconPath), [typeof(Charm)])]
     [HarmonyPrefix]
-    private static bool Patch_GetIconPath_Charm(Charm charm, ref string __result)
+    private static bool Patch_GetCharmIcon(Charm charm, ref string __result)
     {
         if (EquipRegistries.Charms.ContainsName(charm.ToString()))
         {
@@ -24,7 +50,7 @@ internal static class IconPatcher
 
     [HarmonyPatch(nameof(WeaponProperties.GetIconPath), [typeof(Weapon)])]
     [HarmonyPrefix]
-    private static bool Patch_GetIconPath_Weapon(Weapon weapon, ref string __result)
+    private static bool Patch_GetWeaponIcon(Weapon weapon, ref string __result)
     {
         if (EquipRegistries.Weapons.ContainsName(weapon.ToString()))
         {
@@ -49,11 +75,10 @@ internal static class IconPatcher
             {
                 yield return new CodeInstruction(OpCodes.Ldarg_1);
                 yield return new CodeInstruction(OpCodes.Ldloc_1);
-
                 if (i == firstBltIndex)
-                    yield return CodeInstruction.Call(typeof(IconPatcher), nameof(AddNormalSprites));
+                    yield return CodeInstruction.Call(typeof(DetailsPatcher), nameof(AddNormalSprites));
                 else if (i == lastBltIndex)
-                    yield return CodeInstruction.Call(typeof(IconPatcher), nameof(AddGreySprites));
+                    yield return CodeInstruction.Call(typeof(DetailsPatcher), nameof(AddGreySprites));
             }
         }
     }
@@ -62,23 +87,15 @@ internal static class IconPatcher
     {
         if (EquipRegistries.Charms.ContainsName(iconPath))
         {
-            EquipInfo charmInfo = EquipRegistries.Charms.GetValue(iconPath);
-            foreach (string icon in charmInfo.NormalIcons)
-            {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", charmInfo.BundleName, icon);
-                if (sprite != null)
-                    list.Add(sprite);
-            }
+            EquipInfo info = EquipRegistries.Charms.GetValue(iconPath);
+            foreach (string icon in info.NormalIcons)
+               AssetHelper.LoadAsset<Sprite>(info.BundleId, icon, list.Add);
         }
         else if (EquipRegistries.Weapons.ContainsName(iconPath))
         {
-            EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
-            foreach (string icon in weaponInfo.NormalIcons)
-            {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
-                if (sprite != null)
-                    list.Add(sprite);
-            }
+            EquipInfo info = EquipRegistries.Weapons.GetValue(iconPath);
+            foreach (string icon in info.NormalIcons)
+                AssetHelper.LoadAsset<Sprite>(info.BundleId, icon, list.Add);
         }
     }
 
@@ -86,18 +103,14 @@ internal static class IconPatcher
     {
         if (EquipRegistries.Weapons.ContainsName(iconPath))
         {
-            EquipInfo weaponInfo = EquipRegistries.Weapons.GetValue(iconPath);
-            foreach (string icon in weaponInfo.GreyIcons)
-            {
-                Sprite sprite = AssetHelper.CacheAsset<Sprite>("", weaponInfo.BundleName, icon);
-                if (sprite != null)
-                    list.Add(sprite);
-            }
+            EquipInfo info = EquipRegistries.Weapons.GetValue(iconPath);
+            foreach (string icon in info.GreyIcons)
+                AssetHelper.LoadAsset<Sprite>(info.BundleId, icon, list.Add);
         }
     }
 
     internal static void Initialize(Harmony harmony)
     {
-        harmony.PatchAll(typeof(IconPatcher));
+        harmony.PatchAll(typeof(DetailsPatcher));
     }
 }
