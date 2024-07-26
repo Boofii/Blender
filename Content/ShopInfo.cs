@@ -2,8 +2,9 @@
 
 namespace Blender.Content;
 
-public class ShopInfo(string itemName)
+public class ShopInfo(string bundlePath, string itemName)
 {
+    public string BundlePath { get; private set; } = bundlePath;
     public string ItemName { get; private set; } = itemName;
     public ItemType ItemType { get; private set; } = ItemType.Charm;
     public string Charm { get; private set; } = "None";

@@ -5,73 +5,44 @@ using Blender.Content;
 
 namespace Blender.Patching;
 
-[HarmonyPatch(typeof(LevelPlayerWeaponManager.WeaponPrefabs))]
 internal static class PrefabsPatcher
 {
-
-    [HarmonyPatch(nameof(LevelPlayerWeaponManager.WeaponPrefabs.InitWeapon))]
+    [HarmonyPatch(typeof(LevelPlayerWeaponManager.WeaponPrefabs), nameof(LevelPlayerWeaponManager.WeaponPrefabs.InitWeapon))]
     [HarmonyPrefix]
     private static bool Patch_InitWeapon(LevelPlayerWeaponManager.WeaponPrefabs __instance, Weapon id)
     {
-        AbstractLevelWeapon abstractLevelWeapon;
-        switch (id)
+        if (EquipRegistries.Weapons.ContainsName(id.ToString()))
         {
-            case Weapon.level_weapon_peashot:
-                abstractLevelWeapon = __instance.peashot;
-                break;
-            case Weapon.level_weapon_spreadshot:
-                abstractLevelWeapon = __instance.spread;
-                break;
-            case Weapon.level_weapon_arc:
-                abstractLevelWeapon = __instance.arc;
-                break;
-            case Weapon.level_weapon_homing:
-                abstractLevelWeapon = __instance.homing;
-                break;
-            case Weapon.level_weapon_exploder:
-                abstractLevelWeapon = __instance.exploder;
-                break;
-            case Weapon.level_weapon_charge:
-                abstractLevelWeapon = __instance.charge;
-                break;
-            case Weapon.level_weapon_boomerang:
-                abstractLevelWeapon = __instance.boomerang;
-                break;
-            case Weapon.level_weapon_bouncer:
-                abstractLevelWeapon = __instance.bouncer;
-                break;
-            case Weapon.level_weapon_wide_shot:
-                abstractLevelWeapon = __instance.wideShot;
-                break;
-            case Weapon.level_weapon_upshot:
-                abstractLevelWeapon = __instance.upShot;
-                break;
-            case Weapon.level_weapon_crackshot:
-                abstractLevelWeapon = __instance.crackshot;
-                break;
-            default:
-                if (EquipRegistries.Weapons.ContainsName(id.ToString()))
-                {
-                    GameObject prefab = AssetHelper.GetPrefab(id.ToString());
-                    if (prefab != null)
-                    {
-                        abstractLevelWeapon = prefab.GetComponent<AbstractLevelWeapon>();
-                        break;
-                    }
-                }
-                return false;
+            GameObject prefab = AssetHelper.GetPrefab(id.ToString());
+            if (prefab != null)
+            {
+                AbstractLevelWeapon weaponComponent = prefab.GetComponent<AbstractLevelWeapon>();
+                AbstractLevelWeapon weaponClone = UnityEngine.Object.Instantiate(weaponComponent);
+                weaponClone.transform.parent = __instance.root.transform;
+                weaponClone.Initialize(__instance.weaponManager, id);
+                weaponClone.name = weaponClone.name.Replace("(Clone)", string.Empty);
+                __instance.weapons[id] = weaponClone;
+            }
+            return false;
         }
+        return true;
+    }
 
-        if (abstractLevelWeapon != null)
+    [HarmonyPatch(typeof(LevelPlayerWeaponManager.SuperPrefabs), nameof(LevelPlayerWeaponManager.SuperPrefabs.GetPrefab))]
+    [HarmonyPrefix]
+    private static bool Patch_GetSuper(Super super, ref AbstractPlayerSuper __result)
+    {
+        if (EquipRegistries.Supers.ContainsName(super.ToString()))
         {
-            AbstractLevelWeapon abstractLevelWeapon2 = UnityEngine.Object.Instantiate(abstractLevelWeapon);
-            abstractLevelWeapon2.transform.parent = __instance.root.transform;
-            abstractLevelWeapon2.Initialize(__instance.weaponManager, id);
-            abstractLevelWeapon2.name = abstractLevelWeapon2.name.Replace("(Clone)", string.Empty);
-            __instance.weapons[id] = abstractLevelWeapon2;
+            GameObject prefab = AssetHelper.GetPrefab(super.ToString());
+            if (prefab != null)
+            {
+                AbstractPlayerSuper superComponent = prefab.GetComponent<AbstractPlayerSuper>();
+                __result = superComponent;
+            }
+            return false;
         }
-
-        return false;
+        return true;
     }
 
     internal static void Initialize(Harmony harmony)

@@ -5,7 +5,7 @@ using System;
 
 namespace Blender.Content;
 
-public class SceneRegistries
+public static class SceneRegistries
 {
     public static readonly LinkedRegistry<DialoguerDialogues, DialoguerDialogue> Dialogues = new(
         (name, dialogue) =>

@@ -1,8 +1,12 @@
-﻿using Blender.Utility;
+﻿using Blender.Patching;
+using Blender.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Blender.Utility.AssetHelper;
+using static LevelProperties.SallyStagePlay;
+using static PlanePlayerWeaponManager.States;
 
 namespace Blender.Content;
 
@@ -20,15 +24,24 @@ public static class EquipRegistries
             Setup(name, info, WeaponPages, Weapon.None, BlenderAPI.HasDLC ? 9 : 6);
         });
 
+    public static readonly LinkedRegistry<Super, SuperInfo> Supers = new(
+    (name, info) =>
+    {
+        Setup(name, info, SuperPages, Super.None, 3);
+    });
+
     internal static readonly Dictionary<int, Charm[]> CharmPages = [];
     internal static readonly Dictionary<int, Weapon[]> WeaponPages = [];
+    internal static readonly Dictionary<int, Super[]> SuperPages = [];
+    internal static readonly List<string> ProcessedItemBundles = [];
+    internal static readonly Dictionary<string, ItemType> ProcessedItems = [];
+    internal static readonly List<string> ProcessedSuperBundles = [];
+    internal static readonly List<string> ProcessedWeaponBundles = [];
 
     private static void Setup<TEnum>(string name, EquipInfo info, Dictionary<int, TEnum[]> pagesDict, TEnum noneValue, int pageAmount) where TEnum : Enum
     {
-        foreach (string icon in info.NormalIcons)
-            AssetHelper.CacheAsset<Sprite>(info.BundleId, icon, null);
-        foreach (string icon in info.GreyIcons)
-            AssetHelper.CacheAsset<Sprite>(info.BundleId, icon, null);
+        if (info.AtlasPath != null)
+            AssetHelper.AddPersistentPath(LoaderType.Single, info.AtlasPath);
 
         int count = 1;
         foreach (var pageValues in pagesDict.Values)
@@ -47,114 +60,208 @@ public static class EquipRegistries
         int index = array.Where(value => !value.Equals(noneValue)).Count();
         array[index] = (TEnum)Enum.Parse(typeof(TEnum), name);
 
-        if (info is WeaponInfo weaponInfo)
-            SetupWeapon(name, weaponInfo);
+        if (info is WeaponInfo weaponInfo && !ProcessedWeaponBundles.Contains(weaponInfo.BundlePath))
+            SetupWeapons(weaponInfo.BundlePath);
 
-        ShopInfo shopInfo = info.ShopInfo;
-        if (shopInfo != null)
-            SetupItem(info, shopInfo);
+        if (info is SuperInfo superInfo && !ProcessedSuperBundles.Contains(superInfo.BundlePath))
+            SetupSupers(superInfo.BundlePath);
+
+        if (info.ShopInfo != null && !ProcessedItemBundles.Contains(info.ShopInfo.BundlePath))
+            SetupItems(info.ShopInfo.BundlePath);
     }
 
-    private static void SetupItem(EquipInfo info, ShopInfo shopInfo)
+    private static void SetupItems(string bundlePath)
     {
-        AssetHelper.CacheAsset<GameObject>(info.BundleId, shopInfo.ItemName, (item) =>
+        ProcessedItemBundles.Add(bundlePath);
+        AssetHelper.AddScenePathMapping(LoaderType.Multiple, "scene_shop", [bundlePath]);
+        AssetHelper.AddScenePathMapping(LoaderType.Multiple, "scene_shop_DLC", [bundlePath]);
+        MultiLoader.LoadActions[bundlePath] += (name, items) =>
         {
-            ShopSceneItem itemComponent = item.AddComponent<ShopSceneItem>();
-            itemComponent.itemType = shopInfo.ItemType;
-            itemComponent.charm = (Charm)Enum.Parse(typeof(Charm), shopInfo.Charm);
-            itemComponent.weapon = (Weapon)Enum.Parse(typeof(Weapon), shopInfo.Weapon);
-            itemComponent.super = (Super)Enum.Parse(typeof(Super), shopInfo.Super);
-
-            for (int i = 0; i < 4; i++)
+            foreach (UnityEngine.Object item in items)
             {
-                SpriteRenderer renderer = item.transform.GetChild(i).GetComponent<SpriteRenderer>();
-                renderer.material = new Material(Shader.Find("Sprites/Default"));
-                renderer.sortingLayerName = "Foreground";
+                if (item is not GameObject itemObj)
+                    continue;
 
-                switch (i)
+                ShopInfo shopInfo = null;
+                if (Charms.ContainsName(item.name))
                 {
-                    case 0:
-                        itemComponent.spriteInactive = renderer;
-                        renderer.sortingOrder = 399;
-                        renderer.enabled = false;
-                        break;
-                    case 1:
-                        itemComponent.spriteSelected = renderer;
-                        renderer.sortingOrder = 400;
-                        renderer.enabled = true;
-                        break;
-                    case 2:
-                        itemComponent.spritePurchased = renderer;
-                        renderer.sortingOrder = 400;
-                        renderer.enabled = false;
-                        break;
-                    case 3:
-                        itemComponent.spriteShadowObject = renderer;
-                        itemComponent.spriteShadow = renderer.sprite;
-                        itemComponent.originalShadowScale = shopInfo.OriginalShadowScale;
-                        renderer.sortingOrder = 200;
-                        renderer.enabled = true;
-                        break;
+                    shopInfo = Charms.GetValue(item.name).ShopInfo;
+                    ProcessedItems.Add(item.name, ItemType.Charm);
+                }
+                else if (Weapons.ContainsName(item.name))
+                {
+                    shopInfo = Weapons.GetValue(item.name).ShopInfo;
+                    ProcessedItems.Add(item.name, ItemType.Weapon);
+                }
+                else if (Supers.ContainsName(item.name))
+                {
+                    shopInfo = Supers.GetValue(item.name).ShopInfo;
+                    ProcessedItems.Add(item.name, ItemType.Super);
+                }
+                else
+                {
+                    BlenderAPI.LogWarning($"Tried to load a shop item named \"{item.name}\" that didn't have a matching charm/weapon/super.");
+                    continue;
+                }
+
+                if (shopInfo == null)
+                {
+                    BlenderAPI.LogWarning($"Tried to load a shop item named \"{item.name}\" that didn't have a shop info value.");
+                    continue;
+                }
+
+                ShopSceneItem itemComponent = itemObj.AddComponent<ShopSceneItem>();
+                itemComponent.originalShadowScale = shopInfo.OriginalShadowScale;
+                itemComponent.itemType = shopInfo.ItemType;
+                itemComponent.charm = (Charm)Enum.Parse(typeof(Charm), shopInfo.Charm);
+                itemComponent.weapon = (Weapon)Enum.Parse(typeof(Weapon), shopInfo.Weapon);
+                itemComponent.super = (Super)Enum.Parse(typeof(Super), shopInfo.Super);
+
+                for (int i = 0; i < 4; i++)
+                {
+                    SpriteRenderer renderer = itemObj.transform.GetChild(i).GetComponent<SpriteRenderer>();
+                    renderer.material = new Material(Shader.Find("Sprites/Default"));
+                    renderer.sortingLayerName = "Foreground";
+
+                    switch (i)
+                    {
+                        case 0:
+                            itemComponent.spriteInactive = renderer;
+                            renderer.sortingOrder = 399;
+                            renderer.enabled = false;
+                            break;
+                        case 1:
+                            itemComponent.spriteSelected = renderer;
+                            renderer.sortingOrder = 400;
+                            renderer.enabled = true;
+                            break;
+                        case 2:
+                            itemComponent.spritePurchased = renderer;
+                            renderer.sortingOrder = 400;
+                            renderer.enabled = false;
+                            break;
+                        case 3:
+                            itemComponent.spriteShadowObject = renderer;
+                            itemComponent.spriteShadow = renderer.sprite;
+                            renderer.sortingOrder = 200;
+                            renderer.enabled = true;
+                            break;
+                    }
                 }
             }
-        });
+        };
     }
 
-    private static void SetupWeapon(string name, WeaponInfo info)
+    private static void SetupSupers(string bundlePath)
     {
-        GameObject weapon = new GameObject(name);
-        AssetHelper.AddPrefab(weapon, false);
+        ProcessedSuperBundles.Add(bundlePath);
+        AssetHelper.AddPersistentPath(LoaderType.Multiple, bundlePath);
+        MultiLoader.LoadActions[bundlePath] += (name, supers) =>
+        {
+            foreach (UnityEngine.Object super in supers)
+            {
+                if (super is not GameObject superObj)
+                    continue;
 
-        if (!info.WeaponType.IsSubclassOf(typeof(AbstractLevelWeapon)))
-        {
-            BlenderAPI.LogError($"Couldn't register weapon \"{name}\" because its weapon type is not of type \"AbstractLevelWeapon\".");
-            return;
-        }
+                if (!Supers.ContainsName(super.name))
+                {
+                    BlenderAPI.LogWarning($"Tried to load a super named \"{super.name}\" that didn't have a matching super.");
+                    continue;
+                }
 
-        AbstractLevelWeapon weaponComponent = (AbstractLevelWeapon)weapon.AddComponent(info.WeaponType);
+                SuperInfo info = Supers.GetValue(super.name);
+                if (!info.SuperType.IsSubclassOf(typeof(AbstractPlayerSuper)))
+                {
+                    BlenderAPI.LogError($"Couldn't load a super named \"{super.name}\" because its super type is not of type \"AbstractPlayerSuper\".");
+                    continue;
+                }
 
-        if (!info.BasicType.IsSubclassOf(typeof(AbstractProjectile)))
-        {
-            BlenderAPI.LogError($"Couldn't register weapon \"{name}\" because its basic type is not of type \"AbstractProjectile\".");
-            return;
-        }
-        AssetHelper.LoadAsset<GameObject>(info.BundleId, info.BasicName, (basic) =>
-        {
-            AbstractProjectile basicComponent = (AbstractProjectile)basic.AddComponent(info.BasicType);
-            SetupProjectile(basicComponent);
-            weaponComponent.basicPrefab = basicComponent;
-        });
+                AbstractPlayerSuper superComponent = (AbstractPlayerSuper)superObj.AddComponent(info.SuperType);
+                foreach (SpriteRenderer renderer in superObj.GetComponentsInChildren<SpriteRenderer>())
+                    renderer.material = new Material(Shader.Find("Sprites/Default"));
+                if (superObj.GetComponent<Animator>() == null)
+                    superObj.AddComponent<Animator>();
+                superObj.AddComponent<AnimationHelper>();
+                superComponent.cuphead = superObj.transform.GetChild(0).GetComponent<SpriteRenderer>();
+                superComponent.mugman = superObj.transform.GetChild(1).GetComponent<SpriteRenderer>();
+                AssetHelper.AddPrefab(superObj, false);
+            }
+        };
+    }
 
-        if (!info.ExType.IsSubclassOf(typeof(AbstractProjectile)))
+    private static void SetupWeapons(string bundlePath)
+    {
+        ProcessedWeaponBundles.Add(bundlePath);
+        AssetHelper.AddPersistentPath(LoaderType.Multiple, bundlePath);
+        MultiLoader.LoadActions[bundlePath] += (name, weapons) =>
         {
-            BlenderAPI.LogError($"Couldn't register weapon \"{name}\" because its ex type is not of type \"AbstractProjectile\".");
-            return;
-        }
-        AssetHelper.LoadAsset<GameObject>(info.BundleId, info.ExName, (ex) =>
-        {
-            AbstractProjectile exComponent = (AbstractProjectile)ex.AddComponent(info.ExType);
-            SetupProjectile(exComponent);
-            weaponComponent.exPrefab = exComponent;
-        });
+            foreach (UnityEngine.Object weapon in weapons)
+            {
+                if (weapon is not GameObject weaponObj)
+                    continue;
 
-        AssetHelper.LoadAsset<GameObject>(info.BundleId, info.BasicEffectName, (basicEffect) =>
-        {
-            WeaponSparkEffect effect = SetupEffect(basicEffect, info.BasicEffectType);
-            weaponComponent.basicEffectPrefab = effect;
-        });
+                if (!Weapons.ContainsName(weapon.name))
+                {
+                    BlenderAPI.LogWarning($"Tried to load a weapon named \"{weapon.name}\" that didn't have a matching weapon.");
+                    continue;
+                }
 
-        AssetHelper.LoadAsset<GameObject>(info.BundleId, info.ExEffectName, (exEffect) =>
-        {
-            WeaponSparkEffect effect = SetupEffect(exEffect, info.ExEffectType);
-            weaponComponent.exEffectPrefab = effect;
-        });
+                WeaponInfo info = Weapons.GetValue(weapon.name);
+                if (!info.WeaponType.IsSubclassOf(typeof(AbstractLevelWeapon)))
+                {
+                    BlenderAPI.LogError($"Couldn't load a weapon named \"{weapon.name}\" because its weapon type is not of type \"AbstractLevelWeapon\".");
+                    continue;
+                }
+                AbstractLevelWeapon weaponComponent = (AbstractLevelWeapon)weaponObj.AddComponent(info.WeaponType);
+                
+                if (weaponObj.transform.childCount < 1)
+                {
+                    BlenderAPI.LogError($"Couldn't load a weapon named \"{weapon.name}\" because it was missing a basic projectile child.");
+                    continue;
+                }
+
+                Transform basic = weaponObj.transform.GetChild(0);
+                AbstractProjectile basicComponent = (AbstractProjectile)basic.gameObject.AddComponent(info.BasicType);
+                SetupProjectile(basicComponent);
+                weaponComponent.basicPrefab = AssetHelper.AddPrefab(basic.gameObject, true).GetComponent<AbstractProjectile>();
+                GameObject.Destroy(basic.gameObject);
+
+                if (weaponObj.transform.childCount > 1)
+                {
+                    Transform ex = weaponObj.transform.GetChild(1);
+                    AbstractProjectile exComponent = (AbstractProjectile)ex.gameObject.AddComponent(info.ExType);
+                    SetupProjectile(exComponent);
+                    weaponComponent.exPrefab = AssetHelper.AddPrefab(ex.gameObject, true).GetComponent<AbstractProjectile>();
+                    GameObject.Destroy(ex.gameObject);
+
+                    if (weaponObj.transform.childCount > 2)
+                    {
+                        Transform basicEffect = weaponObj.transform.GetChild(2);
+                        WeaponSparkEffect effectComponent = SetupEffect(basicEffect.gameObject, info.BasicEffectType);
+                        weaponComponent.basicEffectPrefab = AssetHelper.AddPrefab(basicEffect.gameObject, true).GetComponent<WeaponSparkEffect>();
+                        GameObject.Destroy(effectComponent.gameObject);
+
+                        if (weaponObj.transform.childCount > 3)
+                        {
+                            Transform exEffect = weaponObj.transform.GetChild(3);
+                            weaponComponent.exEffectPrefab  = AssetHelper.AddPrefab(exEffect.gameObject, true).GetComponent<WeaponSparkEffect>();
+                            GameObject.Destroy(exEffect.gameObject);
+                        }
+                    }
+                }
+                AssetHelper.AddPrefab(weaponObj, false);
+            }
+        };
     }
 
     private static void SetupProjectile(AbstractProjectile projectile)
     {
         SpriteRenderer renderer = projectile.GetComponent<SpriteRenderer>();
         if (renderer != null)
+        {
+            renderer.material = new Material(Shader.Find("Sprites/Default"));
             renderer.sortingLayerName = "Projectiles";
+        }
 
         Animator animator = projectile.GetComponent<Animator>();
         if (animator != null)
@@ -174,6 +281,7 @@ public static class EquipRegistries
         }
         else
             projectile.gameObject.AddComponent<Animator>();
+        projectile.gameObject.AddComponent<AnimationHelper>();
 
         projectile.gameObject.tag = "PlayerProjectile";
         projectile.gameObject.layer = LayerMask.NameToLayer("Projectile");
@@ -181,7 +289,15 @@ public static class EquipRegistries
 
     private static WeaponSparkEffect SetupEffect(GameObject effect, Type effectType)
     {
+        SpriteRenderer renderer = effect.GetComponent<SpriteRenderer>();
+        if (renderer != null)
+        {
+            renderer.material = new Material(Shader.Find("Sprites/Default"));
+            renderer.sortingLayerName = "Player";
+        }
+
         WeaponSparkEffect effectComponent = (WeaponSparkEffect)effect.AddComponent(effectType);
+        effect.AddComponent<AnimationHelper>();
         Animator animator = effect.GetComponent<Animator>();
         if (animator != null)
         {
@@ -216,5 +332,6 @@ public static class EquipRegistries
             weapons.RemoveRange(6, 3);
             WeaponPages[1] = weapons.ToArray();
         }
+        SuperPages[1] = MapEquipUICardBackSelect.SUPERS;
     }
 }

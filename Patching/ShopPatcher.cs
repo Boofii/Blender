@@ -1,41 +1,41 @@
 ﻿using Blender.Content;
-using Blender.Utility;
 using HarmonyLib;
 using UnityEngine;
 
 namespace Blender.Patching;
 
 [HarmonyPatch(typeof(ShopScenePlayer))]
-internal class ShopPatcher
+internal static class ShopPatcher
 {
     [HarmonyPatch(nameof(ShopScenePlayer.Awake))]
     [HarmonyPrefix]
     private static void Patch_Awake(ShopScenePlayer __instance)
     {
-        foreach (EquipInfo info in EquipRegistries.Charms.GetValues())
+        foreach (string bundlePath in EquipRegistries.ProcessedItemBundles)
         {
-            ShopInfo shopInfo = info.ShopInfo;
-            if (shopInfo != null)
+            if (AssetLoader<Object[]>.Instance.tryGetAsset(bundlePath, out var items))
             {
-                AssetHelper.LoadAsset<GameObject>(info.BundleId, shopInfo.ItemName, (item) =>
+                foreach (Object item in items)
                 {
-                    ShopSceneItem itemComponent = item.GetComponent<ShopSceneItem>();
-                    itemComponent.buyAnimation = __instance.charmItemPrefabs[0].buyAnimation;
-                    __instance.charmItemPrefabs = __instance.charmItemPrefabs.AddToArray(itemComponent);
-                });
-            }
-        }
-        foreach (EquipInfo info in EquipRegistries.Weapons.GetValues())
-        {
-            ShopInfo shopInfo = info.ShopInfo;
-            if (shopInfo != null)
-            {
-                AssetHelper.LoadAsset<GameObject>(info.BundleId, shopInfo.ItemName, (item) =>
-                {
-                    ShopSceneItem itemComponent = item.GetComponent<ShopSceneItem>();
-                    itemComponent.buyAnimation = __instance.weaponItemPrefabs[0].buyAnimation;
-                    __instance.weaponItemPrefabs = __instance.weaponItemPrefabs.AddToArray(itemComponent);
-                });
+                    if (item is not GameObject itemObj)
+                        return;
+
+                    ShopSceneItem itemComponent = itemObj.GetComponent<ShopSceneItem>();
+                    if (itemComponent != null)
+                    {
+                        switch (EquipRegistries.ProcessedItems[item.name])
+                        {
+                            case ItemType.Charm:
+                                itemComponent.buyAnimation = __instance.charmItemPrefabs[0].buyAnimation;
+                                __instance.charmItemPrefabs = __instance.charmItemPrefabs.AddToArray(itemComponent);
+                                break;
+                            default:
+                                itemComponent.buyAnimation = __instance.weaponItemPrefabs[0].buyAnimation;
+                                __instance.weaponItemPrefabs = __instance.weaponItemPrefabs.AddToArray(itemComponent);
+                                break;
+                        }
+                    }
+                }
             }
         }
     }

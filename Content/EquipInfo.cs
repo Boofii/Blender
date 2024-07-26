@@ -1,18 +1,16 @@
-﻿using Blender.Utility;
-
-namespace Blender.Content;
+﻿namespace Blender.Content;
 
 public class EquipInfo
 {
-    public Identifier BundleId { get; private set; } = null;
+    public string AtlasPath = null;
     public string[] NormalIcons { get; private set; } = [];
     public string[] GreyIcons { get; private set; } = [];
     public int Cost { get; private set; } = 3;
     public ShopInfo ShopInfo { get; private set; } = null;
 
-    public EquipInfo SetBundleId(Identifier bundleId)
+    public EquipInfo SetAtlasPath(string atlasPath)
     {
-        this.BundleId = bundleId;
+        this.AtlasPath = atlasPath;
         return this;
     }
 
@@ -43,5 +41,10 @@ public class EquipInfo
     public WeaponInfo AsWeaponInfo()
     {
         return this as WeaponInfo;
+    }
+
+    public SuperInfo AsSuperInfo()
+    {
+        return this as SuperInfo;
     }
 }

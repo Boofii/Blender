@@ -3,11 +3,8 @@ using BepInEx.Logging;
 using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
-using DialoguerCore;
 using HarmonyLib;
-using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 
 namespace Blender;
 
@@ -30,20 +27,44 @@ public class BlenderAPI : BaseUnityPlugin
         CustomData.Initialize(Harmony);
         EnumPatcher.Initialize(Harmony);
         EquipMenuPatcher.Initialize(Harmony);
-        DetailsPatcher.Initialize(Harmony);
+        PropertiesPatcher.Initialize(Harmony);
         PrefabsPatcher.Initialize(Harmony);
         LocalizationPatcher.Initialize(Harmony);
         ShopPatcher.Initialize(Harmony);
-
-        AssetHelper.Initialize();
+        AudioPatcher.Initialize(Harmony);
+        AssetHelper.Initialize(Harmony);
         EquipRegistries.Initialize();
+
+        //SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public static void RegisterLocalization(Identifier id)
+    /*private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (!LocalizationPatcher.RegisteredIds.Contains(id))
-            LocalizationPatcher.RegisteredIds.Add(id);
+        if (scene.name == "scene_slot_select")
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            StartCoroutine(GetLevelResources());
+        }
     }
+
+    private static IEnumerator GetLevelResources()
+    {
+        var request1 = SceneManager.LoadSceneAsync("scene_level_slime");
+        while (!request1.isDone)
+            yield return null;
+        SlimeLevel level1 = FindObjectOfType<SlimeLevel>();
+        LevelResources resources1 = level1.LevelResources;
+        AssetHelper.AddPrefab(resources1.gameObject, true);
+
+        var request2 = SceneManager.LoadSceneAsync("scene_level_flying_blimp");
+        while (!request2.isDone)
+            yield return null;
+        FlyingBlimpLevel level2 = FindObjectOfType<FlyingBlimpLevel>();
+        LevelResources resources2 = level2.LevelResources;
+        AssetHelper.AddPrefab(resources2.gameObject, true);
+
+        SceneManager.LoadScene("scene_slot_select");
+    }*/
 
     internal static void LogInfo(string message)
     {

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using UnityEngine;
 
 namespace Blender.Patching;
 
@@ -15,6 +14,7 @@ internal static class EquipMenuPatcher
     internal static int[] CharmsPage = [1, 1];
     internal static int[] ShotAPage = [1, 1];
     internal static int[] ShotBPage = [1, 1];
+    internal static int[] SupersPage = [1, 1];
 
     [HarmonyPatch(nameof(MapEquipUICardBackSelect.ChangeSelection))]
     [HarmonyPrefix]
@@ -29,6 +29,8 @@ internal static class EquipMenuPatcher
             case MapEquipUICard.Slot.SHOT_B:
                 return ChangePages(__instance, direction, EquipRegistries.WeaponPages, ref ShotBPage, (weapon, id) => PlayerData.Data.IsUnlocked((PlayerId)id, weapon));
             case MapEquipUICard.Slot.SUPER:
+                return ChangePages(__instance, direction, EquipRegistries.SuperPages, ref SupersPage, (super, id) => PlayerData.Data.IsUnlocked((PlayerId)id, super));
+            default:
                 break;
         }
         return true;
@@ -51,16 +53,32 @@ internal static class EquipMenuPatcher
         if (unlockedCount == 0)
             return true;
 
-        int switchIndex = BlenderAPI.HasDLC ? 5 : 3;
-        if (index >= 0 && index <= switchIndex - 1 && direction.y == 1 && pagesArray[id] != 1)
+        int switchIndex = typeof(TEnum) == typeof(Super) ? 2 : BlenderAPI.HasDLC ? 5 : 3;
+        if (switchIndex == 2)
         {
-            pagesArray[id]--;
-            pageChanged = true;
+            if (index >= 0 && index <= 2 && direction.y == 1 && pagesArray[id] != 1)
+            {
+                pagesArray[id]--;
+                pageChanged = true;
+            }
+            else if (index >= 0 && index <= 2 && direction.y == -1 && pagesArray[id] != pageCount)
+            {
+                pagesArray[id]++;
+                pageChanged = true;
+            }
         }
-        else if (index >= switchIndex && direction.y == -1 && pagesArray[id] != pageCount)
+        else
         {
-            pagesArray[id]++;
-            pageChanged = true;
+            if (index >= 0 && index <= switchIndex - 1 && direction.y == 1 && pagesArray[id] != 1)
+            {
+                pagesArray[id]--;
+                pageChanged = true;
+            }
+            else if (index >= switchIndex && direction.y == -1 && pagesArray[id] != pageCount)
+            {
+                pagesArray[id]++;
+                pageChanged = true;
+            }
         }
 
         if (pageChanged)
@@ -95,6 +113,11 @@ internal static class ContentAdder
                 yield return new CodeInstruction(OpCodes.Ldarg_0).WithLabels(instruction.labels);
                 yield return CodeInstruction.Call(typeof(ContentAdder), nameof(ContentAdder.GetWeapons));
             }
+            else if (instruction.LoadsField(AccessTools.Field(typeof(MapEquipUICardBackSelect), "SUPERS")))
+            {
+                yield return new CodeInstruction(OpCodes.Ldarg_0).WithLabels(instruction.labels);
+                yield return CodeInstruction.Call(typeof(ContentAdder), nameof(ContentAdder.GetSupers));
+            }
             else
             {
                 yield return instruction;
@@ -116,6 +139,12 @@ internal static class ContentAdder
             EquipMenuPatcher.ShotBPage[id];
 
         return EquipRegistries.WeaponPages[page];
+    }
+
+    private static Super[] GetSupers(MapEquipUICardBackSelect instance)
+    {
+        int id = (int)instance.playerID;
+        return EquipRegistries.SuperPages[EquipMenuPatcher.SupersPage[id]];
     }
 
     private static IEnumerable<MethodBase> TargetMethods()

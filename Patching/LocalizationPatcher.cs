@@ -5,7 +5,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 
 namespace Blender.Patching;
 
@@ -121,6 +120,12 @@ public static class LocalizationPatcher
         }
         foreach (TranslationElement translation in Elements.Values)
             Localization.Instance.m_TranslationElements.Add(translation);
+    }
+
+    public static void RegisterLocalization(Identifier id)
+    {
+        if (!RegisteredIds.Contains(id))
+            RegisteredIds.Add(id);
     }
 
     [HarmonyPatch(typeof(DialoguerDataManager), nameof(DialoguerDataManager.Initialize))]
