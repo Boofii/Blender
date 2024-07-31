@@ -14,7 +14,8 @@ public static class AudioPatcher
     [HarmonyPrefix]
     private static void Patch_AudioAwake(AudioManagerComponent __instance)
     {
-        if (__instance.GetComponent<LevelAudio>() != null || __instance.transform.parent.GetComponent<Map>() != null)
+        if (__instance.GetComponent<LevelAudio>() != null || (__instance.transform.parent != null &&
+            __instance.transform.parent.GetComponent<Map>() != null))
         {
             Transform soundHolder = new GameObject("Custom_SFX").transform;
             soundHolder.parent = __instance.transform;

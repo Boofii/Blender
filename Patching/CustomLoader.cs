@@ -15,12 +15,12 @@ public class CustomLoader : AssetLoader<UnityEngine.Object>
     {
         AssetBundleLoader.AssetBundleLocation location = AssetHelper.ModAssetsLocation;
         string[] splitName = assetName.Split(AssetHelper.AssetSeperator);
-        if (splitName.Length != 2)
-        {
-            BlenderAPI.LogWarning($"Tried to load an asset named \"{assetName}\" that consisted of more/less elements than 2.");
-            return null;
-        }
         string bundleName = splitName[0];
+        if (splitName.Length < 2)
+        {
+            return AssetBundleLoader.Instance.StartCoroutine
+                (AssetBundleLoader.Instance.loadAssetBundle(bundleName, location));
+        }
         string name = splitName[1];
         return AssetBundleLoader.Instance.StartCoroutine(AssetBundleLoader.Instance.loadAsset(bundleName, location, name,
             new Action<UnityEngine.Object>((asset) =>

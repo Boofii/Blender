@@ -5,29 +5,27 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Blender.Utility.AssetHelper;
-using static LevelProperties.SallyStagePlay;
-using static PlanePlayerWeaponManager.States;
 
 namespace Blender.Content;
 
 public static class EquipRegistries
 {
     public static readonly LinkedRegistry<Charm, EquipInfo> Charms = new(
-        (name, info) =>
+        (charm, info) =>
         {
-            Setup(name, info, CharmPages, Charm.None, BlenderAPI.HasDLC ? 9 : 6);
+            Setup(charm, info, CharmPages, Charm.None, BlenderAPI.HasDLC ? 9 : 6);
         });
 
     public static readonly LinkedRegistry<Weapon, WeaponInfo> Weapons = new(
-        (name, info) =>
+        (weapon, info) =>
         {
-            Setup(name, info, WeaponPages, Weapon.None, BlenderAPI.HasDLC ? 9 : 6);
+            Setup(weapon, info, WeaponPages, Weapon.None, BlenderAPI.HasDLC ? 9 : 6);
         });
 
     public static readonly LinkedRegistry<Super, SuperInfo> Supers = new(
-    (name, info) =>
+    (super, info) =>
     {
-        Setup(name, info, SuperPages, Super.None, 3);
+        Setup(super, info, SuperPages, Super.None, 3);
     });
 
     internal static readonly Dictionary<int, Charm[]> CharmPages = [];
@@ -38,7 +36,7 @@ public static class EquipRegistries
     internal static readonly List<string> ProcessedSuperBundles = [];
     internal static readonly List<string> ProcessedWeaponBundles = [];
 
-    private static void Setup<TEnum>(string name, EquipInfo info, Dictionary<int, TEnum[]> pagesDict, TEnum noneValue, int pageAmount) where TEnum : Enum
+    private static void Setup<TEnum>(TEnum instance, EquipInfo info, Dictionary<int, TEnum[]> pagesDict, TEnum noneValue, int pageAmount) where TEnum : Enum
     {
         if (info.AtlasPath != null)
             AssetHelper.AddPersistentPath(LoaderType.Single, info.AtlasPath);
@@ -58,7 +56,7 @@ public static class EquipRegistries
 
         TEnum[] array = pagesDict[page];
         int index = array.Where(value => !value.Equals(noneValue)).Count();
-        array[index] = (TEnum)Enum.Parse(typeof(TEnum), name);
+        array[index] = instance;
 
         if (info is WeaponInfo weaponInfo && !ProcessedWeaponBundles.Contains(weaponInfo.BundlePath))
             SetupWeapons(weaponInfo.BundlePath);

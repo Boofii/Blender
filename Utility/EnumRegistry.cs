@@ -6,7 +6,7 @@ namespace Blender.Utility {
 
     internal interface IEnumRegistry
     {
-        void Register(string name);
+        Enum Register(string name);
         string GetName(int id);
         int GetId(string name);
         bool ContainsName(string name);
@@ -20,14 +20,13 @@ namespace Blender.Utility {
         private readonly Dictionary<string, int> namesAndIds = [];
         private readonly Dictionary<int, string> idsAndNames = [];
 
-        public void Register(string name) {
-            if (Enum.IsDefined(typeof(TEnum), name))
-                return;
+        public Enum Register(string name) {
             if (!namesAndIds.ContainsKey(name) && !Enum.IsDefined(typeof(TEnum), name)) {
                 int id = this.CurrentId + 1;
                 namesAndIds[name] = id;
                 idsAndNames[id] = name;
             }
+            return (TEnum)Enum.Parse(typeof(TEnum), name);
         }
 
         public string GetName(int id) {

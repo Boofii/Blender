@@ -9,28 +9,29 @@ public class LinkedRegistry<TEnum, TValue> where TEnum : Enum
     private readonly EnumRegistry<TEnum> enumRegistry;
     private readonly Dictionary<string, TValue> namesAndValues = [];
     private readonly Dictionary<TValue, string> valuesAndNames = [];
-    private readonly Action<string, TValue> registeredEvent;
+    private readonly Action<TEnum, TValue> registeredEvent;
 
     public LinkedRegistry()
     {
         this.enumRegistry = EnumManager.Register<TEnum>();
     }
 
-    public LinkedRegistry(Action<string, TValue> registeredEvent)
+    public LinkedRegistry(Action<TEnum, TValue> registeredEvent)
     {
         this.enumRegistry = EnumManager.Register<TEnum>();
         this.registeredEvent = registeredEvent;
     }
 
-    public void Register(string name, TValue value)
+    public TEnum Register(string name, TValue value)
     {
-        if (!namesAndValues.ContainsKey(name) && enumRegistry != null)
+        if (!namesAndValues.ContainsKey(name))
         {
-            enumRegistry.Register(name);
+            TEnum instance = (TEnum)enumRegistry.Register(name);
             namesAndValues[name] = value;
             valuesAndNames[value] = name;
-            registeredEvent?.Invoke(name, value);
+            registeredEvent?.Invoke(instance, value);
         }
+        return (TEnum)Enum.Parse(typeof(TEnum), name);
     }
 
     public TValue GetValue(string name)

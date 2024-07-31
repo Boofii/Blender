@@ -1,14 +1,19 @@
 ﻿using BepInEx;
+using Blender.Content;
 using Blender.Patching;
 using HarmonyLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.U2D;
 using static AssetBundleLoader;
 using static RuntimeSceneAssetDatabase;
+using static SceneLoader;
 
 namespace Blender.Utility;
 
@@ -101,42 +106,118 @@ public static class AssetHelper
         }
     }
 
-    [HarmonyPatch(typeof(SceneLoader), nameof(SceneLoader.load_cr), MethodType.Enumerator)]
-    [HarmonyTranspiler]
-    private static IEnumerable<CodeInstruction> Patch_SceneLoad(IEnumerable<CodeInstruction> instructions)
+    [HarmonyPatch(typeof(SceneLoader), nameof(SceneLoader.load_cr))]
+    [HarmonyPrefix]
+    private static bool Patch_SceneLoad(SceneLoader __instance, ref IEnumerator __result)
     {
-        bool foundFirst = false;
-        Type type = AccessTools.Inner(typeof(SceneLoader), "<load_cr>d__0");
-        foreach (var instruction in instructions)
+        __result = HandleSceneLoad(__instance);
+        return false;
+    }
+
+    private static IEnumerator HandleSceneLoad(SceneLoader instance)
+    {
+        instance.doneLoadingSceneAsync = false;
+        GC.Collect();
+        if (SceneName != previousSceneName && SceneName != Scenes.scene_slot_select.ToString())
         {
-            yield return instruction;
-            if (instruction.opcode == OpCodes.Blt && !foundFirst)
+            string text = null;
+            if (!Array.Exists(Level.kingOfGamesLevelsWithCastle, (Levels level) => LevelProperties.GetLevelScene(level) == SceneName))
             {
-                foundFirst = true;
-                yield return CodeInstruction.Call(typeof(AssetHelper), nameof(LoadCustomAssets));
+                text = Scenes.scene_level_chess_castle.ToString();
             }
-            else if (instruction.Calls(AccessTools.Method(typeof(AssetLoader<Texture2D[]>), nameof(AssetLoader<Texture2D[]>.UnloadAssets))))
+
+            AssetBundleLoader.UnloadAssetBundles();
+            AssetLoader<SpriteAtlas>.UnloadAssets(text);
+            if (SceneName != Scenes.scene_cutscene_dlc_saltbaker_prebattle.ToString())
             {
-                yield return CodeInstruction.Call(typeof(AssetHelper), nameof(UnloadCustomAssets));
+                AssetLoader<AudioClip>.UnloadAssets();
             }
+
+            AssetLoader<Texture2D[]>.UnloadAssets();
+            AssetLoader<UnityEngine.Object>.UnloadAssets();
+            AssetLoader<UnityEngine.Object[]>.UnloadAssets();
+            AssetHelper.RemovePrefab("Level_Resources");
         }
+
+        if (SceneName == Scenes.scene_title.ToString())
+        {
+            DLCManager.RefreshDLC();
+        }
+
+        AssetLoaderOption atlasOption = AssetLoaderOption.None();
+        if (SceneName == Scenes.scene_level_chess_castle.ToString())
+        {
+            atlasOption = AssetLoaderOption.PersistInCacheTagged(SceneName);
+        }
+
+        string[] preloadAtlases = AssetLoader<SpriteAtlas>.GetPreloadAssetNames(SceneName);
+        string[] preloadMusic = AssetLoader<AudioClip>.GetPreloadAssetNames(SceneName);
+        LevelInfo info = SceneRegistries.Levels.GetValue(SceneName);
+        if (info != null)
+            yield return instance.StartCoroutine(GetResources(info));
+
+        if (SceneName != previousSceneName && (preloadAtlases.Length != 0 || preloadMusic.Length != 0 ||
+            AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneName).Length != 0 ||
+            AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneName).Length != 0))
+        {
+            AsyncOperation intermediateSceneAsyncOp = SceneManager.LoadSceneAsync(instance.LOAD_SCENE_NAME);
+            while (!intermediateSceneAsyncOp.isDone)
+            {
+                yield return null;
+            }
+
+            for (int k = 0; k < preloadAtlases.Length; k++)
+            {
+                yield return AssetLoader<SpriteAtlas>.LoadAsset(preloadAtlases[k], atlasOption);
+            }
+
+            AssetLoaderOption musicOption = AssetLoaderOption.None();
+            for (int k = 0; k < preloadMusic.Length; k++)
+            {
+                yield return AssetLoader<AudioClip>.LoadAsset(preloadMusic[k], musicOption);
+            }
+
+            string[] preloadSingles = AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneLoader.SceneName);
+            for (int i = 0; i < preloadSingles.Length; i++)
+            {
+                yield return AssetLoader<UnityEngine.Object>.Instance.loadAsset(preloadSingles[i], null);
+            }
+            string[] preloadMultiples = AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneLoader.SceneName);
+            for (int i = 0; i < preloadMultiples.Length; i++)
+            {
+                yield return AssetLoader<UnityEngine.Object[]>.Instance.loadAsset(preloadSingles[i], null);
+            }
+
+            Coroutine[] persistentAssetsCoroutines = DLCManager.LoadPersistentAssets();
+            if (persistentAssetsCoroutines != null)
+            {
+                for (int k = 0; k < persistentAssetsCoroutines.Length; k++)
+                {
+                    yield return persistentAssetsCoroutines[k];
+                }
+            }
+
+            yield return null;
+        }
+
+        AsyncOperation async = SceneManager.LoadSceneAsync(SceneName);
+        while (!async.isDone || AssetBundleLoader.loadCounter > 0)
+        {
+            instance.UpdateProgress(async.progress);
+            yield return null;
+        }
+
+        instance.doneLoadingSceneAsync = true;
     }
 
-    private static void LoadCustomAssets()
-    {
-        AssetLoaderOption option = AssetLoaderOption.None();
-        string[] preloadCustoms = AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneLoader.SceneName);
-        for (int i = 0; i < preloadCustoms.Length; i++)
-            AssetLoader<UnityEngine.Object>.LoadAsset(preloadCustoms[i], option);
-        string[] preloadMultiples = AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneLoader.SceneName);
-        for (int i = 0; i < preloadMultiples.Length; i++)
-            AssetLoader<UnityEngine.Object[]>.LoadAsset(preloadMultiples[i], option);
-    }
+    private static IEnumerator GetResources(LevelInfo info) {
+        AsyncOperation request = SceneManager.LoadSceneAsync(info.ResourcesScene);
+        while (!request.isDone)
+            yield return null;
 
-    private static void UnloadCustomAssets()
-    {
-        AssetLoader<UnityEngine.Object>.UnloadAssets([]);
-        AssetLoader<UnityEngine.Object[]>.UnloadAssets([]);
+        Level level = GameObject.FindObjectOfType<Level>();
+        LevelResources resources = level.LevelResources;
+        AssetHelper.AddPrefab(resources.gameObject, true);
     }
 
     private static string GetBundlePath(string bundleName, AssetBundleLocation location)
@@ -259,6 +340,11 @@ public static class AssetHelper
         return newPrefab;
     }
 
+    public static bool HasPrefab(string name) {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        return prefab != null;
+    }
+
     public static GameObject GetPrefab(string name)
     {
         Transform prefab = PrefabHolder.transform.Find(name);
@@ -268,6 +354,14 @@ public static class AssetHelper
             return null;
         }
         return prefab.gameObject;
+    }
+
+    public static void RemovePrefab(string name) {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        if (prefab != null) {
+            PrefabKeys.Remove(prefab.name);
+            GameObject.Destroy(prefab.gameObject);
+        }
     }
 
     internal static void Initialize(Harmony harmony)
