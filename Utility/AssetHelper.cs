@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using Blender.Content;
-using Blender.Patching;
 using HarmonyLib;
 using System;
 using System.Collections;
@@ -30,11 +29,80 @@ public static class AssetHelper
     private static GameObject PrefabHolder { get; set; }
     private static readonly List<string> PrefabKeys = [];
 
+    public static void AddPersistentPath(LoaderType type, string path)
+    {
+        if (type == LoaderType.Single)
+        {
+            if (!persistentAssets.Contains(path))
+            {
+                persistentAssets.Add(path);
+                SingleLoader.LoadActions[path] = null;
+                SingleLoader.DestroyActions[path] = null;
+            }
+        }
+        else
+        {
+            if (!persistentBundles.Contains(path))
+            {
+                persistentBundles.Add(path);
+                MultiLoader.LoadActions[path] = null;
+                MultiLoader.DestroyActions[path] = null;
+            }
+        }
+    }
+
+    public static void AddScenePathMapping(LoaderType type, string scene, string[] paths)
+    {
+        if (type == LoaderType.Single)
+        {
+            if (!sceneAssetMappings.ContainsKey(scene))
+            {
+                sceneAssetMappings.Add(scene, paths);
+                foreach (string path in paths)
+                {
+                    SingleLoader.LoadActions[path] = null;
+                    SingleLoader.DestroyActions[path] = null;
+                }
+            }
+            else
+            {
+                sceneAssetMappings[scene] = sceneAssetMappings[scene].AddRangeToArray(paths);
+                foreach (string path in paths)
+                {
+                    SingleLoader.LoadActions[path] = null;
+                    SingleLoader.DestroyActions[path] = null;
+                }
+            }
+        }
+        else
+        {
+            if (!sceneBundleMappings.ContainsKey(scene))
+            {
+                sceneBundleMappings.Add(scene, paths);
+                foreach (string path in paths)
+                {
+                    MultiLoader.LoadActions[path] = null;
+                    MultiLoader.DestroyActions[path] = null;
+                }
+            }
+            else
+            {
+                string[] newBundles = paths.Where(p => !sceneBundleMappings[scene].Contains(p)).ToArray();
+                sceneBundleMappings[scene] = sceneBundleMappings[scene].AddRangeToArray(newBundles);
+                foreach (string path in newBundles)
+                {
+                    MultiLoader.LoadActions[path] = null;
+                    MultiLoader.DestroyActions[path] = null;
+                }
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(AssetBundleLoader), nameof(AssetBundleLoader.Awake))]
     [HarmonyPostfix]
     private static void Patch_LoaderAwake(AssetBundleLoader __instance)
     {
-        CustomLoader customLoader = __instance.gameObject.AddComponent<CustomLoader>();
+        SingleLoader customLoader = __instance.gameObject.AddComponent<SingleLoader>();
         RuntimeSceneAssetDatabase database = ScriptableObject.CreateInstance<RuntimeSceneAssetDatabase>();
         database.name = "SceneAssetDatabase";
         SceneAssetMapping[] mappings = sceneAssetMappings.Select((mapping) =>
@@ -114,6 +182,81 @@ public static class AssetHelper
         return false;
     }
 
+    private static string GetBundlePath(string bundleName, AssetBundleLocation location)
+    {
+        if (location == ModAssetsLocation)
+        {
+            string[] splitName = bundleName.Split(BundleSeperator);
+            return Path.Combine(splitName[0], "Assets");
+        }
+        return "AssetBundles";
+    }
+
+    private static string GetBundleName(string bundleName, AssetBundleLocation location)
+    {
+        if (location == ModAssetsLocation)
+        {
+            string[] splitName = bundleName.Split(BundleSeperator);
+            return splitName[1];
+        }
+        return bundleName;
+    }
+
+    [HarmonyPatch(typeof(AssetBundleLoader), nameof(getBasePath))]
+    [HarmonyPrefix]
+    private static bool Patch_GetBasePath(AssetBundleLocation location, ref string __result)
+    {
+        if (location == ModAssetsLocation)
+        {
+            __result = Paths.PluginPath;
+            return false;
+        }
+        return true;
+    }
+
+    public static GameObject AddPrefab(GameObject prefab, bool asClone)
+    {
+        if (PrefabKeys.Contains(prefab.name))
+        {
+            BlenderAPI.LogWarning($"Tried to add a prefab that already existed with name \"{prefab.name}\".");
+            return null;
+        }
+
+        GameObject newPrefab = prefab;
+        if (asClone)
+        {
+            newPrefab = GameObject.Instantiate(prefab);
+            newPrefab.name = prefab.name;
+        }
+        newPrefab.transform.SetParent(PrefabHolder.transform);
+        PrefabKeys.Add(newPrefab.name);
+        return newPrefab;
+    }
+
+    public static bool HasPrefab(string name) {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        return prefab != null;
+    }
+
+    public static GameObject GetPrefab(string name)
+    {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        if (prefab == null)
+        {
+            BlenderAPI.LogWarning($"Couldn't find a prefab with name \"{name}\".");
+            return null;
+        }
+        return prefab.gameObject;
+    }
+
+    public static void RemovePrefab(string name) {
+        Transform prefab = PrefabHolder.transform.Find(name);
+        if (prefab != null) {
+            PrefabKeys.Remove(prefab.name);
+            GameObject.Destroy(prefab.gameObject);
+        }
+    }
+
     private static IEnumerator HandleSceneLoad(SceneLoader instance)
     {
         instance.doneLoadingSceneAsync = false;
@@ -177,15 +320,17 @@ public static class AssetHelper
                 yield return AssetLoader<AudioClip>.LoadAsset(preloadMusic[k], musicOption);
             }
 
+            AssetLoaderOption option = AssetLoaderOption.None();
+
             string[] preloadSingles = AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadSingles.Length; i++)
             {
-                yield return AssetLoader<UnityEngine.Object>.Instance.loadAsset(preloadSingles[i], null);
+                yield return AssetLoader<UnityEngine.Object>.LoadAsset(preloadSingles[i], option);
             }
             string[] preloadMultiples = AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadMultiples.Length; i++)
             {
-                yield return AssetLoader<UnityEngine.Object[]>.Instance.loadAsset(preloadSingles[i], null);
+                yield return AssetLoader<UnityEngine.Object[]>.LoadAsset(preloadSingles[i], option);
             }
 
             Coroutine[] persistentAssetsCoroutines = DLCManager.LoadPersistentAssets();
@@ -210,158 +355,19 @@ public static class AssetHelper
         instance.doneLoadingSceneAsync = true;
     }
 
-    private static IEnumerator GetResources(LevelInfo info) {
+    private static IEnumerator GetResources(LevelInfo info)
+    {
+        if (AssetHelper.HasPrefab("Level_Resources"))
+            yield break;
+
         AsyncOperation request = SceneManager.LoadSceneAsync(info.ResourcesScene);
         while (!request.isDone)
             yield return null;
 
         Level level = GameObject.FindObjectOfType<Level>();
         LevelResources resources = level.LevelResources;
+        resources.name = "Level_Resources";
         AssetHelper.AddPrefab(resources.gameObject, true);
-    }
-
-    private static string GetBundlePath(string bundleName, AssetBundleLocation location)
-    {
-        if (location == ModAssetsLocation)
-        {
-            string[] splitName = bundleName.Split(BundleSeperator);
-            return Path.Combine(splitName[0], "Assets");
-        }
-        return "AssetBundles";
-    }
-
-    private static string GetBundleName(string bundleName, AssetBundleLocation location)
-    {
-        if (location == ModAssetsLocation)
-        {
-            string[] splitName = bundleName.Split(BundleSeperator);
-            return splitName[1];
-        }
-        return bundleName;
-    }
-
-    [HarmonyPatch(typeof(AssetBundleLoader), nameof(getBasePath))]
-    [HarmonyPrefix]
-    private static bool Patch_GetBasePath(AssetBundleLocation location, ref string __result)
-    {
-        if (location == ModAssetsLocation)
-        {
-            __result = Paths.PluginPath;
-            return false;
-        }
-        return true;
-    }
-
-    public static void AddPersistentPath(LoaderType type, string path)
-    {
-        if (type == LoaderType.Single)
-        {
-            if (!persistentAssets.Contains(path))
-            {
-                persistentAssets.Add(path);
-                CustomLoader.LoadActions[path] = null;
-                CustomLoader.DestroyActions[path] = null;
-            }
-        }
-        else
-        {
-            if (!persistentBundles.Contains(path))
-            {
-                persistentBundles.Add(path);
-                MultiLoader.LoadActions[path] = null;
-                MultiLoader.DestroyActions[path] = null;
-            }
-        }
-    }
-
-    public static void AddScenePathMapping(LoaderType type, string scene, string[] paths)
-    {
-        if (type == LoaderType.Single)
-        {
-            if (!sceneAssetMappings.ContainsKey(scene))
-            {
-                sceneAssetMappings.Add(scene, paths);
-                foreach (string path in paths)
-                {
-                    CustomLoader.LoadActions[path] = null;
-                    CustomLoader.DestroyActions[path] = null;
-                }
-            }
-            else
-            {
-                sceneAssetMappings[scene] = sceneAssetMappings[scene].AddRangeToArray(paths);
-                foreach (string path in paths)
-                {
-                    CustomLoader.LoadActions[path] = null;
-                    CustomLoader.DestroyActions[path] = null;
-                }
-            }
-        }
-        else
-        {
-            if (!sceneBundleMappings.ContainsKey(scene))
-            {
-                sceneBundleMappings.Add(scene, paths);
-                foreach (string path in paths)
-                {
-                    MultiLoader.LoadActions[path] = null;
-                    MultiLoader.DestroyActions[path] = null;
-                }
-            }
-            else
-            {
-                string[] newBundles = paths.Where(p => !sceneBundleMappings[scene].Contains(p)).ToArray();
-                sceneBundleMappings[scene] = sceneBundleMappings[scene].AddRangeToArray(newBundles);
-                foreach (string path in newBundles)
-                {
-                    MultiLoader.LoadActions[path] = null;
-                    MultiLoader.DestroyActions[path] = null;
-                }
-            }
-        }
-    }
-
-    public static GameObject AddPrefab(GameObject prefab, bool asClone)
-    {
-        if (PrefabKeys.Contains(prefab.name))
-        {
-            BlenderAPI.LogWarning($"Tried to add a prefab that already existed with name \"{prefab.name}\".");
-            return null;
-        }
-
-        GameObject newPrefab = prefab;
-        if (asClone)
-        {
-            newPrefab = GameObject.Instantiate(prefab);
-            newPrefab.name = prefab.name;
-        }
-        newPrefab.transform.SetParent(PrefabHolder.transform);
-        PrefabKeys.Add(newPrefab.name);
-        return newPrefab;
-    }
-
-    public static bool HasPrefab(string name) {
-        Transform prefab = PrefabHolder.transform.Find(name);
-        return prefab != null;
-    }
-
-    public static GameObject GetPrefab(string name)
-    {
-        Transform prefab = PrefabHolder.transform.Find(name);
-        if (prefab == null)
-        {
-            BlenderAPI.LogWarning($"Couldn't find a prefab with name \"{name}\".");
-            return null;
-        }
-        return prefab.gameObject;
-    }
-
-    public static void RemovePrefab(string name) {
-        Transform prefab = PrefabHolder.transform.Find(name);
-        if (prefab != null) {
-            PrefabKeys.Remove(prefab.name);
-            GameObject.Destroy(prefab.gameObject);
-        }
     }
 
     internal static void Initialize(Harmony harmony)

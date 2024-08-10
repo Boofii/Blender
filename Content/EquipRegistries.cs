@@ -1,5 +1,4 @@
-﻿using Blender.Patching;
-using Blender.Utility;
+﻿using Blender.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -182,6 +181,7 @@ public static class EquipRegistries
                 superObj.AddComponent<AnimationHelper>();
                 superComponent.cuphead = superObj.transform.GetChild(0).GetComponent<SpriteRenderer>();
                 superComponent.mugman = superObj.transform.GetChild(1).GetComponent<SpriteRenderer>();
+                superComponent.isChaliceSuper = info.IsChaliceSuper;
                 AssetHelper.AddPrefab(superObj, false);
             }
         };

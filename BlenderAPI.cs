@@ -4,9 +4,7 @@ using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
-using System;
 using System.IO;
-using UnityEngine;
 
 namespace Blender;
 
@@ -17,8 +15,7 @@ public class BlenderAPI : BaseUnityPlugin
     private static readonly Harmony Harmony = new(PluginInfo.PLUGIN_GUID);
     private static new ManualLogSource Logger = null;
 
-    private void Awake()
-    {
+    private void Awake() {
         base.Logger.LogInfo($"Blender v{PluginInfo.PLUGIN_VERSION} was loaded.");
         BlenderAPI.Logger = base.Logger;
 

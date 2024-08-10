@@ -1,6 +1,7 @@
 ﻿using Blender.Utility;
 using DialoguerCore;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using static Blender.Utility.AssetHelper;
 
@@ -31,4 +32,12 @@ public static class SceneRegistries
 
     internal static readonly EnumRegistry<Levels> LevelsRegistry = EnumManager.Register<Levels>();
     internal static readonly Dictionary<Levels, Scenes> LevelSceneLinker = [];
+
+    public static Levels GetLevel(Scenes scene)
+    {
+        LevelInfo info = Levels.GetValue(scene.ToString());
+        if (info != null)
+            return (Levels)Enum.Parse(typeof(Levels), info.LevelName);
+        return global::Levels.Slime;
+    }
 }

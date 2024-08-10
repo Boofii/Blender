@@ -1,11 +1,10 @@
-﻿using Blender.Utility;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Blender.Patching;
+namespace Blender.Utility;
 
-public class CustomLoader : AssetLoader<UnityEngine.Object>
+public class SingleLoader : AssetLoader<UnityEngine.Object>
 {
     public static readonly Dictionary<string, Action<string, UnityEngine.Object>> LoadActions = [];
     public static readonly Dictionary<string, Action<string, UnityEngine.Object>> DestroyActions = [];

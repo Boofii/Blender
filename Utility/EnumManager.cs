@@ -17,7 +17,7 @@ public static class EnumManager
             Registries[type] = registry;
             return registry;
         }
-        return null;
+        return (EnumRegistry<TEnum>)Registries[type];
     }
 
     public static bool TryGetRegistry<TEnum>(out EnumRegistry<TEnum> registry) where TEnum : Enum

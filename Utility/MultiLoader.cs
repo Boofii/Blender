@@ -1,9 +1,8 @@
-﻿using Blender.Utility;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Blender.Patching;
+namespace Blender.Utility;
 
 public class MultiLoader : AssetLoader<UnityEngine.Object[]>
 {
