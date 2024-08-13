@@ -2,7 +2,7 @@
 
 Blender is a modding library that adds features like custom weapons, custom audio, custom assets and much more!<br>
 For any help on your development journey, visit the Blender's discord server: https://discord.com/invite/py9mWsShcf<br>
-You can also use Blender's wiki to learn the basics: https://github.com/Boofii/Blender/wiki<br>
+You can also use Blender's wiki to learn the basics: https://boofii.github.io/blender-docs<br>
 
 # Installation:
 
