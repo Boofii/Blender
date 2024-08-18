@@ -11,7 +11,7 @@ namespace Blender.Patching;
 [HarmonyPatch(typeof(Localization))]
 public static class LocalizationPatcher
 {
-    internal static readonly List<Identifier> RegisteredIds = [];
+    internal static readonly List<Identifier> Ids = [];
     private static readonly Dictionary<string, TranslationElement> Elements = [];
     private static readonly Dictionary<string, TranslationElement> DuplicatedElements = [];
 
@@ -41,7 +41,7 @@ public static class LocalizationPatcher
     [HarmonyPostfix]
     private static void Patch_Awake()
     {
-        foreach (Identifier id in RegisteredIds)
+        foreach (Identifier id in Ids)
         {
             if (id.Validate())
             {
@@ -113,10 +113,6 @@ public static class LocalizationPatcher
                     }
                 }
             }
-            else
-            {
-                BlenderAPI.LogWarning($"A localization file with path \"{id}\" couldn't be found.");
-            }
         }
         foreach (TranslationElement translation in Elements.Values)
             Localization.Instance.m_TranslationElements.Add(translation);
@@ -124,8 +120,8 @@ public static class LocalizationPatcher
 
     public static void RegisterLocalization(Identifier id)
     {
-        if (!RegisteredIds.Contains(id))
-            RegisteredIds.Add(id);
+        if (!Ids.Contains(id))
+            Ids.Add(id);
     }
 
     [HarmonyPatch(typeof(DialoguerDataManager), nameof(DialoguerDataManager.Initialize))]

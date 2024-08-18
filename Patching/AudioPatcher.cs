@@ -22,12 +22,15 @@ public static class AudioPatcher
             Transform bgmHolder = new GameObject("Custom_BGM").transform;
             bgmHolder.parent = __instance.transform;
 
-            foreach (string bundlePath in AssetLoader<Object[]>.Instance.loadedAssets.Keys)
+            foreach (string bundlePath in audio.Keys)
             {
+                if (!MultiLoader.Instance.loadedAssets.ContainsKey(bundlePath))
+                    continue;
+
                 Object[] assets = AssetLoader<Object[]>.Instance.loadedAssets[bundlePath].asset;
                 foreach (Object asset in assets)
                 {
-                    if (asset is not AudioClip clip || !audio.ContainsKey(bundlePath))
+                    if (asset is not AudioClip clip)
                         continue;
 
                     GameObject audioObj = new(clip.name);
@@ -36,8 +39,7 @@ public static class AudioPatcher
                         audioObj.transform.parent = soundHolder;
                         AudioSource source = audioObj.AddComponent<AudioSource>();
                         source.clip = clip;
-                        SoundGroup group = new()
-                        {
+                        SoundGroup group = new() {
                             key = clip.name,
                             sources = [new() { audio = source }]
                         };
@@ -48,8 +50,7 @@ public static class AudioPatcher
                         audioObj.transform.parent = bgmHolder;
                         AudioSource audioSource = audioObj.AddComponent<AudioSource>();
                         audioSource.clip = clip;
-                        SoundGroup.Source source = new()
-                        {
+                        SoundGroup.Source source = new() {
                             audio = audioSource
                         };
                         __instance.bgmSources.Add(source);

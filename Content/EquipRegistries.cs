@@ -266,7 +266,7 @@ public static class EquipRegistries
         {
             foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
             {
-                if (clip.name == "Death")
+                if (clip.name.ToLower().Contains("death"))
                 {
                     AnimationEvent evt = new()
                     {
@@ -295,6 +295,9 @@ public static class EquipRegistries
         }
 
         WeaponSparkEffect effectComponent = (WeaponSparkEffect)effect.AddComponent(effectType);
+        effectComponent.randomMirrorX = true;
+        effectComponent.randomMirrorY = true;
+        effectComponent.randomRotation = true;
         effect.AddComponent<AnimationHelper>();
         Animator animator = effect.GetComponent<Animator>();
         if (animator != null)
