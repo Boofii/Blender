@@ -74,6 +74,20 @@ public static class AudioPatcher
             audio.Add(bundlePath, true);
     }
 
+    public static void AddPersistentSounds(string bundlePath)
+    {
+        AssetHelper.AddPersistentPath(AssetHelper.LoaderType.Multiple, bundlePath);
+        if (!audio.ContainsKey(bundlePath))
+            audio.Add(bundlePath, false);
+    }
+
+    public static void AddPersistentBGM(string bundlePath)
+    {
+        AssetHelper.AddPersistentPath(AssetHelper.LoaderType.Multiple, bundlePath);
+        if (!audio.ContainsKey(bundlePath))
+            audio.Add(bundlePath, true);
+    }
+
     internal static void Initialize(Harmony harmony)
     {
         harmony.PatchAll(typeof(AudioPatcher));

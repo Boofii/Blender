@@ -2,6 +2,8 @@
 using Blender.Utility;
 using UnityEngine;
 using Blender.Content;
+using System;
+using System.Linq;
 
 namespace Blender.Patching;
 
@@ -11,7 +13,8 @@ internal static class PrefabsPatcher
     [HarmonyPrefix]
     private static bool Patch_InitWeapon(LevelPlayerWeaponManager.WeaponPrefabs __instance, Weapon id)
     {
-        if (EquipRegistries.Weapons.ContainsName(id.ToString()))
+        if (EquipRegistries.Weapons.ContainsName(id.ToString())
+            && !BlenderAPI.OriginalWeapons.Contains(id))
         {
             GameObject prefab = AssetHelper.GetPrefab(id.ToString());
             if (prefab != null)

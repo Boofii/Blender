@@ -189,6 +189,9 @@ public static class EquipRegistries
 
     private static void SetupWeapons(string bundlePath)
     {
+        if (bundlePath == null)
+            return;
+
         ProcessedWeaponBundles.Add(bundlePath);
         AssetHelper.AddPersistentPath(LoaderType.Multiple, bundlePath);
         MultiLoader.LoadActions[bundlePath] += (name, weapons) =>
