@@ -5,7 +5,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 
 namespace Blender.Patching;
 
@@ -125,9 +124,7 @@ public static class LocalizationPatcher
 
     private static void ModifyTranslation(TranslationElement duplicate)
     {
-        BlenderAPI.LogInfo(duplicate.key);
         int originalId = Localization.Instance.m_TranslationElements.FindIndex(elm => elm.key == duplicate.key);
-        BlenderAPI.LogInfo(originalId.ToString());
         TranslationElement original = Localization.Instance.m_TranslationElements[originalId];
         for (int i = 0; i < original.translations.Length; i++)
         {

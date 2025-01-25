@@ -15,6 +15,9 @@
 	  <Reference Include="Assembly-CSharp" Publicize="true">
 	    <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cuphead\Cuphead_Data\Managed\Assembly-CSharp.dll</HintPath>
 	  </Reference>
+	  <Reference Include="UnityEngine.UI">
+	    <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cuphead\Cuphead_Data\Managed\UnityEngine.UI.dll</HintPath>
+	  </Reference>
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.1.0" />
     <PackageReference Include="UnityEngine.Modules" Version="2017.4.9" IncludeAssets="compile" />

@@ -4,7 +4,9 @@ using Blender.Content;
 using Blender.Patching;
 using Blender.Utility;
 using HarmonyLib;
+using System;
 using System.IO;
+using UnityEngine;
 
 namespace Blender;
 
@@ -33,6 +35,7 @@ public class BlenderAPI : BaseUnityPlugin
         AudioPatcher.Initialize(Harmony);
         AssetHelper.Initialize(Harmony);
         ScenePatcher.Initialize(Harmony);
+        WeaponHUDPatcher.Initialize(Harmony);
         EquipRegistries.Initialize();
     }
 
