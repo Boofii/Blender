@@ -233,6 +233,13 @@ public static class AssetHelper
         return newPrefab;
     }
 
+    public static GameObject AddPrefab(GameObject prefab, bool asClone, Transform parent)
+    {
+        GameObject newPrefab = AddPrefab(prefab, asClone);
+        newPrefab.transform.SetParent(parent);
+        return newPrefab;
+    }
+
     public static bool HasPrefab(string name) {
         Transform prefab = PrefabHolder.transform.Find(name);
         return prefab != null;
@@ -280,6 +287,7 @@ public static class AssetHelper
             AssetLoader<UnityEngine.Object>.UnloadAssets();
             AssetLoader<UnityEngine.Object[]>.UnloadAssets();
             AssetHelper.RemovePrefab("Level_Resources");
+            AssetHelper.RemovePrefab("Map_Resources");
         }
 
         if (SceneName == Scenes.scene_title.ToString())
@@ -295,9 +303,13 @@ public static class AssetHelper
 
         string[] preloadAtlases = AssetLoader<SpriteAtlas>.GetPreloadAssetNames(SceneName);
         string[] preloadMusic = AssetLoader<AudioClip>.GetPreloadAssetNames(SceneName);
-        LevelInfo info = SceneRegistries.Levels.GetValue(SceneName);
-        if (info != null)
-            yield return instance.StartCoroutine(GetResources(info));
+        LevelInfo levelInfo = SceneRegistries.Levels.GetValue(SceneName);
+        if (levelInfo != null)
+            yield return instance.StartCoroutine(GetResources(levelInfo));
+
+        /*MapInfo mapInfo = SceneRegistries.Maps.GetValue(SceneName);
+        if (mapInfo != null)
+            yield return instance.StartCoroutine(GetResources());*/
 
         if (SceneName != previousSceneName && (preloadAtlases.Length != 0 || preloadMusic.Length != 0 ||
             AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneName).Length != 0 ||
@@ -322,15 +334,15 @@ public static class AssetHelper
 
             AssetLoaderOption option = AssetLoaderOption.None();
 
-            string[] preloadSingles = AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneLoader.SceneName);
+            string[] preloadSingles = SingleLoader.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadSingles.Length; i++)
             {
-                yield return AssetLoader<UnityEngine.Object>.LoadAsset(preloadSingles[i], option);
+                yield return SingleLoader.LoadAsset(preloadSingles[i], option);
             }
-            string[] preloadMultiples = AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneLoader.SceneName);
+            string[] preloadMultiples = MultiLoader.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadMultiples.Length; i++)
             {
-                yield return AssetLoader<UnityEngine.Object[]>.LoadAsset(preloadSingles[i], option);
+                yield return MultiLoader.LoadAsset(preloadMultiples[i], option);
             }
 
             Coroutine[] persistentAssetsCoroutines = DLCManager.LoadPersistentAssets();
@@ -367,6 +379,21 @@ public static class AssetHelper
         Level level = GameObject.FindObjectOfType<Level>();
         LevelResources resources = level.LevelResources;
         resources.name = "Level_Resources";
+        AssetHelper.AddPrefab(resources.gameObject, true);
+    }
+
+    public static IEnumerator GetResources()
+    {
+        if (AssetHelper.HasPrefab("Map_Resources"))
+            yield break;
+
+        AsyncOperation request = SceneManager.LoadSceneAsync("scene_map_world_1");
+        while (!request.isDone)
+            yield return null;
+
+        Map map = GameObject.FindObjectOfType<Map>();
+        MapResources resources = map.MapResources;
+        resources.name = "Map_Resources";
         AssetHelper.AddPrefab(resources.gameObject, true);
     }
 

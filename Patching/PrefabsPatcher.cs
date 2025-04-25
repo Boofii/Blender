@@ -2,7 +2,6 @@
 using Blender.Utility;
 using UnityEngine;
 using Blender.Content;
-using System;
 using System.Linq;
 
 namespace Blender.Patching;
@@ -16,10 +15,10 @@ internal static class PrefabsPatcher
         if (EquipRegistries.Weapons.ContainsName(id.ToString())
             && !BlenderAPI.OriginalWeapons.Contains(id))
         {
-            GameObject prefab = AssetHelper.GetPrefab(id.ToString());
-            if (prefab != null)
+            GameObject root = AssetHelper.GetPrefab(id.ToString());
+            if (root != null)
             {
-                AbstractLevelWeapon weaponComponent = prefab.GetComponent<AbstractLevelWeapon>();
+                AbstractLevelWeapon weaponComponent = root.GetComponentInChildren<AbstractLevelWeapon>();
                 AbstractLevelWeapon weaponClone = UnityEngine.Object.Instantiate(weaponComponent);
                 weaponClone.transform.parent = __instance.root.transform;
                 weaponClone.Initialize(__instance.weaponManager, id);

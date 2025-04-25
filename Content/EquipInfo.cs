@@ -10,31 +10,31 @@ public class EquipInfo
 
     public EquipInfo SetAtlasPath(string atlasPath)
     {
-        this.AtlasPath = atlasPath;
+        AtlasPath = atlasPath;
         return this;
     }
 
     public EquipInfo SetNormalIcons(string[] normalIcons)
     {
-        this.NormalIcons = normalIcons;
+        NormalIcons = normalIcons;
         return this;
     }
 
     public EquipInfo SetGreyIcons(string[] greyIcons)
     {
-        this.GreyIcons = greyIcons;
+        GreyIcons = greyIcons;
         return this;
     }
 
     public EquipInfo SetCost(int cost)
     {
-        this.Cost = cost;
+        Cost = cost;
         return this;
     }
 
     public EquipInfo SetShopInfo(ShopInfo shopInfo)
     {
-        this.ShopInfo = shopInfo;
+        ShopInfo = shopInfo;
         return this;
     }
 

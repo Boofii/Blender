@@ -16,40 +16,41 @@ public class LevelInfo
 
     public LevelInfo(Type levelType, string bundlePath, string levelName)
     {
-        this.LevelType = levelType;
-        this.BundlePath = bundlePath;
-        this.LevelName = levelName;
-        this.ResourcesScene = GetResourcesScene(this.ActualType, this.PlayerMode);
+        LevelType = levelType;
+        BundlePath = bundlePath;
+        LevelName = levelName;
+        ResourcesScene = GetResourcesScene(ActualType, PlayerMode);
     }
 
     public LevelInfo SetPlayerMode(PlayerMode playerMode)
     {
-        this.PlayerMode = playerMode;
-        this.ResourcesScene = GetResourcesScene(this.ActualType, this.PlayerMode);
+        PlayerMode = playerMode;
+        ResourcesScene = GetResourcesScene(ActualType, PlayerMode);
         return this;
     }
 
     public LevelInfo SetActualType(Level.Type actualType)
     {
-        this.ActualType = actualType;
-        this.ResourcesScene = GetResourcesScene(this.ActualType, this.PlayerMode);
+        ActualType = actualType;
+        ResourcesScene = GetResourcesScene(ActualType, PlayerMode);
         return this;
     }
 
     public LevelInfo SetDefaultGoalTimes(Level.GoalTimes defaultGoalTimes)
     {
-        this.DefaultGoalTimes = defaultGoalTimes;
+        DefaultGoalTimes = defaultGoalTimes;
         return this;
     }
 
     public LevelInfo SetSpawns(Level.Spawns spawns)
     {
-        this.Spawns = spawns;
+        Spawns = spawns;
         return this;
     }
 
-    public LevelInfo SetSetupAction(Action<Level> setupAction) {
-        this.SetupAction += setupAction;
+    public LevelInfo SetSetupAction(Action<Level> setupAction)
+    {
+        SetupAction += setupAction;
         return this;
     }
 

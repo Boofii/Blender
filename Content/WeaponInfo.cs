@@ -13,25 +13,25 @@ public class WeaponInfo(Type weaponType, string bundlePath) : EquipInfo
 
     public WeaponInfo SetBasicType(Type basicType)
     {
-        this.BasicType = basicType;
+        BasicType = basicType;
         return this;
     }
 
-    public WeaponInfo SetExType(Type exEffectType)
+    public WeaponInfo SetExType(Type exType)
     {
-        this.ExEffectType = exEffectType;
+        ExType = exType;
         return this;
     }
 
     public WeaponInfo SetBasicEffectType(Type basicEffectType)
     {
-        this.BasicEffectType = basicEffectType;
+        BasicEffectType = basicEffectType;
         return this;
     }
 
     public WeaponInfo SetExEffectType(Type exType)
     {
-        this.ExEffectType = exType;
+        ExEffectType = exType;
         return this;
     }
 }

@@ -8,7 +8,7 @@ public class MultiLoader : AssetLoader<UnityEngine.Object[]>
 {
     public static readonly Dictionary<string, Action<string, UnityEngine.Object[]>> LoadActions = [];
     public static readonly Dictionary<string, Action<string, UnityEngine.Object[]>> DestroyActions = [];
-    private static readonly Dictionary<UnityEngine.Object[], string> AssetPaths = [];
+    public static readonly Dictionary<UnityEngine.Object[], string> AssetPaths = [];
 
     public override Coroutine loadAsset(string bundleName, Action<UnityEngine.Object[]> completionHandler)
     {

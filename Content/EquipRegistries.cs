@@ -221,10 +221,13 @@ public static class EquipRegistries
                     continue;
                 }
 
+                GameObject root = new GameObject(weapon.name);
+                weaponObj.transform.SetParent(root.transform);
+
                 Transform basic = weaponObj.transform.GetChild(0);
                 AbstractProjectile basicComponent = (AbstractProjectile)basic.gameObject.AddComponent(info.BasicType);
                 SetupProjectile(basicComponent);
-                weaponComponent.basicPrefab = AssetHelper.AddPrefab(basic.gameObject, true).GetComponent<AbstractProjectile>();
+                weaponComponent.basicPrefab = AssetHelper.AddPrefab(basic.gameObject, true, root.transform).GetComponent<AbstractProjectile>();
                 GameObject.Destroy(basic.gameObject);
 
                 if (weaponObj.transform.childCount > 1)
@@ -232,25 +235,26 @@ public static class EquipRegistries
                     Transform ex = weaponObj.transform.GetChild(1);
                     AbstractProjectile exComponent = (AbstractProjectile)ex.gameObject.AddComponent(info.ExType);
                     SetupProjectile(exComponent);
-                    weaponComponent.exPrefab = AssetHelper.AddPrefab(ex.gameObject, true).GetComponent<AbstractProjectile>();
+                    weaponComponent.exPrefab = AssetHelper.AddPrefab(ex.gameObject, true, root.transform).GetComponent<AbstractProjectile>();
                     GameObject.Destroy(ex.gameObject);
 
                     if (weaponObj.transform.childCount > 2)
                     {
                         Transform basicEffect = weaponObj.transform.GetChild(2);
                         WeaponSparkEffect effectComponent = SetupEffect(basicEffect.gameObject, info.BasicEffectType);
-                        weaponComponent.basicEffectPrefab = AssetHelper.AddPrefab(basicEffect.gameObject, true).GetComponent<WeaponSparkEffect>();
-                        GameObject.Destroy(effectComponent.gameObject);
+                        weaponComponent.basicEffectPrefab = AssetHelper.AddPrefab(basicEffect.gameObject, true, root.transform).GetComponent<WeaponSparkEffect>();
+                        GameObject.Destroy(basicEffect.gameObject);
 
                         if (weaponObj.transform.childCount > 3)
                         {
                             Transform exEffect = weaponObj.transform.GetChild(3);
-                            weaponComponent.exEffectPrefab  = AssetHelper.AddPrefab(exEffect.gameObject, true).GetComponent<WeaponSparkEffect>();
+                            WeaponSparkEffect exEffectComponent = SetupEffect(exEffect.gameObject, info.ExEffectType);
+                            weaponComponent.exEffectPrefab = AssetHelper.AddPrefab(exEffect.gameObject, true, root.transform).GetComponent<WeaponSparkEffect>();
                             GameObject.Destroy(exEffect.gameObject);
                         }
                     }
                 }
-                AssetHelper.AddPrefab(weaponObj, false);
+                AssetHelper.AddPrefab(root, false);
             }
         };
     }
@@ -317,6 +321,18 @@ public static class EquipRegistries
             }
         }
         return effectComponent;
+    }
+
+    public static Weapon RegisterUnusedWeapon(string id, EquipInfo info)
+    {
+        Weapon weapon = Weapons.Register(id, new WeaponInfo(null, null)
+            .SetAtlasPath(info.AtlasPath)
+            .SetNormalIcons(info.NormalIcons)
+            .SetGreyIcons(info.GreyIcons)
+            .SetCost(info.Cost)
+            .SetShopInfo(info.ShopInfo)
+            .AsWeaponInfo());
+        return weapon;
     }
 
     internal static void Initialize()

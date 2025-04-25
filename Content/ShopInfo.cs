@@ -13,31 +13,31 @@ public class ShopInfo(string bundlePath)
 
     public ShopInfo SetItemType(ItemType itemType)
     {
-        this.ItemType = itemType;
+        ItemType = itemType;
         return this;
     }
 
     public ShopInfo SetCharm(string charm)
     {
-        this.Charm = charm;
+        Charm = charm;
         return this;
     }
 
     public ShopInfo SetWeapon(string weapon)
     {
-        this.Weapon = weapon;
+        Weapon = weapon;
         return this;
     }
 
     public ShopInfo SetSuper(string super)
     {
-        this.Super = super;
+        Super = super;
         return this;
     }
 
     public ShopInfo SetOriginalShadowScale(Vector3 originalShadowScale)
     {
-        this.OriginalShadowScale = originalShadowScale;
+        OriginalShadowScale = originalShadowScale;
         return this;
     }
 }
