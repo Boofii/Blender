@@ -17,6 +17,7 @@ public class SingleLoader : AssetLoader<UnityEngine.Object>
         string bundleName = splitName[0];
         if (splitName.Length < 2)
         {
+            loadOperations.Remove(assetName);
             return AssetBundleLoader.Instance.StartCoroutine
                 (AssetBundleLoader.Instance.loadAssetBundle(bundleName, location));
         }
