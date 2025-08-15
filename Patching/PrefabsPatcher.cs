@@ -13,7 +13,7 @@ internal static class PrefabsPatcher
     private static bool Patch_InitWeapon(LevelPlayerWeaponManager.WeaponPrefabs __instance, Weapon id)
     {
         if (EquipRegistries.Weapons.ContainsName(id.ToString())
-            && !BlenderAPI.OriginalWeapons.Contains(id))
+            && !SettingsMisc.OriginalWeapons.Contains(id))
         {
             GameObject root = AssetHelper.GetPrefab(id.ToString());
             if (root != null)

@@ -93,8 +93,12 @@ internal static class ScenePatcher
     private static SpeechBubble GetSpeechBubble()
     {
         GameObject root = GameObject.Find("Entities");
-        MapDialogueInteraction firstEntity = root.GetComponentInChildren<MapDialogueInteraction>();
-        return firstEntity.speechBubblePrefab;
+        if (root != null)
+        {
+            MapDialogueInteraction firstEntity = root.GetComponentInChildren<MapDialogueInteraction>();
+            return firstEntity.speechBubblePrefab;
+        }
+        return null;
     }
 
     internal static void Initialize(Harmony harmony)

@@ -42,14 +42,17 @@ public static class SceneRegistries
             foreach (string scene in info.Scenes)
             {
                 if (ProcessedEntityBundles.ContainsKey(scene) && ProcessedEntityBundles[scene].Contains(info.BundlePath))
-                    return;
+                    continue;
 
                 AssetHelper.AddScenePathMapping(LoaderType.Multiple, scene, [info.BundlePath]);
+
                 if (ProcessedEntityBundles.TryGetValue(scene, out List<string> bundles))
                     bundles.Add(info.BundlePath);
                 else
-                    ProcessedEntityBundles.Add(scene, bundles);
+                    ProcessedEntityBundles.Add(scene, [info.BundlePath]);
+
             }
+
             if (MultiLoader.LoadActions[info.BundlePath] != null)
                 return;
 
