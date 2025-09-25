@@ -1,11 +1,13 @@
-# What is Blender
+# Blender
+>Blender is a modding library for cuphead that is injected to the game using dll injection.
+>Blender's mission is to make mods easier than ever to make and much more diverse.
+>Using it, you can add things like custom weapons, charms, supers, audio, assets, levels, and more in minutes.
 
-Blender is a modding library that adds features like custom weapons, custom audio, custom assets and much more!<br>
-For any help on your development journey, visit the Blender's discord server: https://discord.com/invite/py9mWsShcf<br>
-You can also use Blender's wiki to learn the basics: https://boofii.github.io/blender-docs<br>
+## Installation
+>1) Download BepInEx and extract it to Cuphead's directory from here: https://github.com/BepInEx/BepInEx/releases/
+>2) Run the game once and then go to the `BepInEx/plugins` directory, and put `Blender.dll` in there.
+>3) Reference Blender as a library in your project and you are all set up.
 
-# Installation
-
-1) Download BepInEx and extract it to Cuphead's directory from here: https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.2<br>
-2) Run the game once and then go to the BepInEx/plugins directory, and put the Blender.dll in there.<br>
-3) Reference Blender in your project and you are all set up.
+## Help
+>Blender has a wiki to help you learn most of its features: https://boofii.github.io/blender-docs
+>It also has a discord server where you can get help using it from other people: https://discord.com/invite/py9mWsShcf
