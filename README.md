@@ -9,5 +9,5 @@
 >3) Reference Blender as a library in your project and you are all set up.
 
 ## Help
->Blender has a wiki to help you learn most of its features: https://boofii.github.io/blender-docs
->It also has a discord server where you can get help using it from other people: https://discord.com/invite/py9mWsShcf
+>1) Blender has a wiki to help you learn most of its features: https://boofii.github.io/blender-docs
+>2) It also has a discord server where you can get help using it from other people: https://discord.com/invite/py9mWsShcf
