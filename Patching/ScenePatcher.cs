@@ -63,17 +63,23 @@ internal static class ScenePatcher
         {
             LevelInfo info = SceneRegistries.Levels.GetValue(scene.name);
             GameObject levelObj = GameObject.Find("Level");
-            levelObj.SetActive(false);
-            Level level = (Level)levelObj.AddComponent(info.LevelType);
-            LevelResources resources = AssetHelper.GetPrefab("Level_Resources").GetComponent<LevelResources>();
-            level.LevelResources = resources;
-            level.type = info.ActualType;
-            level.playerMode = info.PlayerMode;
-            level.goalTimes = info.DefaultGoalTimes;
-            level.spawns = info.Spawns;
-            level.intro = new();
+            Level level;
+            if ((level = (Level)levelObj.GetComponent(info.LevelType)) == null)
+            {
+                levelObj.SetActive(false);
+                level = (Level)levelObj.AddComponent(info.LevelType);
+                level.type = info.ActualType;
+                level.playerMode = info.PlayerMode;
+                level.goalTimes = info.DefaultGoalTimes;
+                level.spawns = info.Spawns;
+                level.intro = new();
+            }
+            level.LevelResources = AssetHelper.GetLevelResources(level.playerMode);
             info.SetupAction?.Invoke(level);
-            levelObj.SetActive(true);
+            if (!levelObj.activeSelf)
+            {
+                levelObj.SetActive(true);
+            }
         }
         /*else if (SceneRegistries.Maps.ContainsName(scene.name))
         {
