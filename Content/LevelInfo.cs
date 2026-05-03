@@ -54,6 +54,12 @@ public class LevelInfo
         return this;
     }
 
+    public LevelInfo SetResourcesScene(string resourcesScene)
+    {
+        ResourcesScene = resourcesScene;
+        return this;
+    }
+
     private string GetResourcesScene(Level.Type type, PlayerMode playerMode)
     {
         if (type == Level.Type.Platforming)
