@@ -28,6 +28,7 @@ public static class AssetHelper
     private static readonly Dictionary<string, string[]> sceneBundleMappings = [];
     private static GameObject PrefabHolder { get; set; }
     private static readonly List<string> PrefabKeys = [];
+    private static Dictionary<PlayerMode, LevelResources> LevelResources = new Dictionary<PlayerMode, LevelResources>();
 
     public static void AddPersistentPath(LoaderType type, string path)
     {
@@ -303,6 +304,8 @@ public static class AssetHelper
 
         string[] preloadAtlases = AssetLoader<SpriteAtlas>.GetPreloadAssetNames(SceneName);
         string[] preloadMusic = AssetLoader<AudioClip>.GetPreloadAssetNames(SceneName);
+        string[] preloadSingles = SingleLoader.GetPreloadAssetNames(SceneLoader.SceneName);
+        string[] preloadMultiples = MultiLoader.GetPreloadAssetNames(SceneLoader.SceneName);
         LevelInfo levelInfo = SceneRegistries.Levels.GetValue(SceneName);
         if (levelInfo != null)
             yield return instance.StartCoroutine(GetResources(levelInfo));
@@ -311,9 +314,7 @@ public static class AssetHelper
         if (mapInfo != null)
             yield return instance.StartCoroutine(GetResources());*/
 
-        if (SceneName != previousSceneName && (preloadAtlases.Length != 0 || preloadMusic.Length != 0 ||
-            AssetLoader<UnityEngine.Object>.GetPreloadAssetNames(SceneName).Length != 0 ||
-            AssetLoader<UnityEngine.Object[]>.GetPreloadAssetNames(SceneName).Length != 0))
+        if (SceneName != previousSceneName && (preloadAtlases.Length > 0 || preloadMusic.Length > 0 || preloadSingles.Length > 0 || preloadMultiples.Length > 0))
         {
             AsyncOperation intermediateSceneAsyncOp = SceneManager.LoadSceneAsync(instance.LOAD_SCENE_NAME);
             while (!intermediateSceneAsyncOp.isDone)
@@ -334,12 +335,10 @@ public static class AssetHelper
 
             AssetLoaderOption option = AssetLoaderOption.None();
 
-            string[] preloadSingles = SingleLoader.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadSingles.Length; i++)
             {
                 yield return SingleLoader.LoadAsset(preloadSingles[i], option);
             }
-            string[] preloadMultiples = MultiLoader.GetPreloadAssetNames(SceneLoader.SceneName);
             for (int i = 0; i < preloadMultiples.Length; i++)
             {
                 yield return MultiLoader.LoadAsset(preloadMultiples[i], option);
@@ -369,17 +368,20 @@ public static class AssetHelper
 
     private static IEnumerator GetResources(LevelInfo info)
     {
-        if (AssetHelper.HasPrefab("Level_Resources"))
-            yield break;
-
-        AsyncOperation request = SceneManager.LoadSceneAsync(info.ResourcesScene);
-        while (!request.isDone)
-            yield return null;
-
-        Level level = GameObject.FindObjectOfType<Level>();
-        LevelResources resources = level.LevelResources;
-        resources.name = "Level_Resources";
-        AssetHelper.AddPrefab(resources.gameObject, true);
+        if (!AssetHelper.LevelResources.ContainsKey(info.PlayerMode))
+        {
+            Level level;
+            if ((level = UnityEngine.Object.FindObjectOfType<Level>()) == null || level.CurrentScene.ToString() != info.ResourcesScene)
+            {
+                AsyncOperation async = SceneManager.LoadSceneAsync(info.ResourcesScene);
+                while (!async.isDone || (level = UnityEngine.Object.FindObjectOfType<Level>()) == null)
+                {
+                    yield return null;
+                }
+            }
+    	    AssetHelper.LevelResources[level.playerMode] = level.LevelResources;
+        }
+        yield break;
     }
 
     public static IEnumerator GetResources()
@@ -397,6 +399,13 @@ public static class AssetHelper
         AssetHelper.AddPrefab(resources.gameObject, true);
     }
 
+    public static LevelResources GetLevelResources(PlayerMode mode)
+    {
+        LevelResources levelResources;
+        AssetHelper.LevelResources.TryGetValue(mode, out levelResources);
+        return levelResources;
+    }
+    
     internal static void Initialize(Harmony harmony)
     {
         harmony.PatchAll(typeof(AssetHelper));
