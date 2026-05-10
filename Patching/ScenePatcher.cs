@@ -63,10 +63,10 @@ internal static class ScenePatcher
         {
             LevelInfo info = SceneRegistries.Levels.GetValue(scene.name);
             GameObject levelObj = GameObject.Find("Level");
+            levelObj.SetActive(false);
             Level level;
             if ((level = (Level)levelObj.GetComponent(info.LevelType)) == null)
             {
-                levelObj.SetActive(false);
                 level = (Level)levelObj.AddComponent(info.LevelType);
                 level.type = info.ActualType;
                 level.playerMode = info.PlayerMode;
@@ -76,10 +76,7 @@ internal static class ScenePatcher
             }
             level.LevelResources = AssetHelper.GetLevelResources(level.playerMode);
             info.SetupAction?.Invoke(level);
-            if (!levelObj.activeSelf)
-            {
-                levelObj.SetActive(true);
-            }
+            levelObj.SetActive(true);
         }
         /*else if (SceneRegistries.Maps.ContainsName(scene.name))
         {
