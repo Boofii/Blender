@@ -28,7 +28,18 @@ public static class AssetHelper
     private static readonly Dictionary<string, string[]> sceneBundleMappings = [];
     private static GameObject PrefabHolder { get; set; }
     private static readonly List<string> PrefabKeys = [];
-    private static Dictionary<PlayerMode, LevelResources> LevelResources = new Dictionary<PlayerMode, LevelResources>();
+    private static Dictionary<Level.Type, Dictionary<PlayerMode, LevelResources>> LevelResources = new Dictionary<Level.Type, Dictionary<PlayerMode, LevelResources>>
+	{
+		{
+			Level.Type.Battle,
+			new Dictionary<PlayerMode, LevelResources>()
+		},
+		{
+			Level.Type.Platforming,
+			new Dictionary<PlayerMode, LevelResources>()
+		}
+	};
+    /*public static MapResources MapResources;*/
 
     public static void AddPersistentPath(LoaderType type, string path)
     {
@@ -276,44 +287,39 @@ public static class AssetHelper
             {
                 text = Scenes.scene_level_chess_castle.ToString();
             }
-
             AssetBundleLoader.UnloadAssetBundles();
             AssetLoader<SpriteAtlas>.UnloadAssets(text);
             if (SceneName != Scenes.scene_cutscene_dlc_saltbaker_prebattle.ToString())
             {
                 AssetLoader<AudioClip>.UnloadAssets();
             }
-
             AssetLoader<Texture2D[]>.UnloadAssets();
             AssetLoader<UnityEngine.Object>.UnloadAssets();
             AssetLoader<UnityEngine.Object[]>.UnloadAssets();
-            AssetHelper.RemovePrefab("Level_Resources");
-            AssetHelper.RemovePrefab("Map_Resources");
         }
-
         if (SceneName == Scenes.scene_title.ToString())
         {
             DLCManager.RefreshDLC();
         }
-
         AssetLoaderOption atlasOption = AssetLoaderOption.None();
         if (SceneName == Scenes.scene_level_chess_castle.ToString())
         {
             atlasOption = AssetLoaderOption.PersistInCacheTagged(SceneName);
         }
-
         string[] preloadAtlases = AssetLoader<SpriteAtlas>.GetPreloadAssetNames(SceneName);
         string[] preloadMusic = AssetLoader<AudioClip>.GetPreloadAssetNames(SceneName);
         string[] preloadSingles = SingleLoader.GetPreloadAssetNames(SceneLoader.SceneName);
         string[] preloadMultiples = MultiLoader.GetPreloadAssetNames(SceneLoader.SceneName);
         LevelInfo levelInfo = SceneRegistries.Levels.GetValue(SceneName);
         if (levelInfo != null)
+        {
             yield return instance.StartCoroutine(GetResources(levelInfo));
-
+        }
         /*MapInfo mapInfo = SceneRegistries.Maps.GetValue(SceneName);
         if (mapInfo != null)
-            yield return instance.StartCoroutine(GetResources());*/
-
+        {
+            yield return instance.StartCoroutine(GetResources());
+        }*/
         if (SceneName != previousSceneName && (preloadAtlases.Length > 0 || preloadMusic.Length > 0 || preloadSingles.Length > 0 || preloadMultiples.Length > 0))
         {
             AsyncOperation intermediateSceneAsyncOp = SceneManager.LoadSceneAsync(instance.LOAD_SCENE_NAME);
@@ -321,20 +327,16 @@ public static class AssetHelper
             {
                 yield return null;
             }
-
             for (int k = 0; k < preloadAtlases.Length; k++)
             {
                 yield return AssetLoader<SpriteAtlas>.LoadAsset(preloadAtlases[k], atlasOption);
             }
-
             AssetLoaderOption musicOption = AssetLoaderOption.None();
             for (int k = 0; k < preloadMusic.Length; k++)
             {
                 yield return AssetLoader<AudioClip>.LoadAsset(preloadMusic[k], musicOption);
             }
-
             AssetLoaderOption option = AssetLoaderOption.None();
-
             for (int i = 0; i < preloadSingles.Length; i++)
             {
                 yield return SingleLoader.LoadAsset(preloadSingles[i], option);
@@ -343,7 +345,6 @@ public static class AssetHelper
             {
                 yield return MultiLoader.LoadAsset(preloadMultiples[i], option);
             }
-
             Coroutine[] persistentAssetsCoroutines = DLCManager.LoadPersistentAssets();
             if (persistentAssetsCoroutines != null)
             {
@@ -352,57 +353,58 @@ public static class AssetHelper
                     yield return persistentAssetsCoroutines[k];
                 }
             }
-
             yield return null;
         }
-
         AsyncOperation async = SceneManager.LoadSceneAsync(SceneName);
         while (!async.isDone || AssetBundleLoader.loadCounter > 0)
         {
             instance.UpdateProgress(async.progress);
             yield return null;
         }
-
         instance.doneLoadingSceneAsync = true;
+        yield break;
     }
 
     private static IEnumerator GetResources(LevelInfo info)
     {
-        if (!AssetHelper.LevelResources.ContainsKey(info.PlayerMode))
+        if (!AssetHelper.LevelResources[info.ActualType].ContainsKey(info.PlayerMode))
         {
             Level level;
-            if ((level = UnityEngine.Object.FindObjectOfType<Level>()) == null || level.CurrentScene.ToString() != info.ResourcesScene)
+            if ((level = Level.Current) == null || level.CurrentScene.ToString() != info.ResourcesScene)
             {
-                AsyncOperation async = SceneManager.LoadSceneAsync(info.ResourcesScene);
-                while (!async.isDone || (level = UnityEngine.Object.FindObjectOfType<Level>()) == null)
+                yield return SceneManager.LoadSceneAsync(info.ResourcesScene);
+                while ((level = Level.Current) == null)
                 {
                     yield return null;
                 }
             }
-    	    AssetHelper.LevelResources[level.playerMode] = level.LevelResources;
+    	    AssetHelper.LevelResources[level.type][level.playerMode] = level.LevelResources;
         }
         yield break;
     }
 
-    public static IEnumerator GetResources()
+    /*public static IEnumerator GetResources()
     {
-        if (AssetHelper.HasPrefab("Map_Resources"))
-            yield break;
+        if (AssetHelper.MapResources == null)
+        {
+            Map map;
+            if ((map = Map.Current) == null)
+            {
+                yield return SceneManager.LoadSceneAsync("scene_map_world_1");
+                while ((map = Map.Current) == null)
+                {
+                    yield return null;
+                }
+            }
+            AssetHelper.MapResources = map.MapResources;
+        }
+        yield break;
+    }*/
 
-        AsyncOperation request = SceneManager.LoadSceneAsync("scene_map_world_1");
-        while (!request.isDone)
-            yield return null;
-
-        Map map = GameObject.FindObjectOfType<Map>();
-        MapResources resources = map.MapResources;
-        resources.name = "Map_Resources";
-        AssetHelper.AddPrefab(resources.gameObject, true);
-    }
-
-    public static LevelResources GetLevelResources(PlayerMode mode)
+    public static LevelResources GetLevelResources(Level level)
     {
         LevelResources levelResources;
-        AssetHelper.LevelResources.TryGetValue(mode, out levelResources);
+        AssetHelper.LevelResources[level.type].TryGetValue(level.playerMode, out levelResources);
         return levelResources;
     }
     
