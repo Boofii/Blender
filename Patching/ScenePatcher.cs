@@ -17,7 +17,7 @@ internal static class ScenePatcher
     {
         if (__instance.LevelResources == null)
         {
-            __instance.LevelResources = AssetHelper.GetLevelResources(__instance.playerMode);
+            __instance.LevelResources = AssetHelper.GetLevelResources(__instance);
         }
     }
 
@@ -83,7 +83,7 @@ internal static class ScenePatcher
                 level.goalTimes = info.DefaultGoalTimes;
                 level.spawns = info.Spawns;
                 level.intro = new();
-                level.LevelResources = AssetHelper.GetLevelResources(level.playerMode);
+                level.LevelResources = AssetHelper.GetLevelResources(level);
             }
             info.SetupAction?.Invoke(level);
             if (!levelObj.activeSelf)
@@ -97,8 +97,7 @@ internal static class ScenePatcher
             GameObject mapObj = GameObject.Find("Map");
             mapObj.SetActive(false);
             Map map = mapObj.AddComponent<Map>();
-            MapResources resources = AssetHelper.GetPrefab("Map_Resources").GetComponent<MapResources>();
-            map.MapResources = resources;
+            map.MapResources = AssetHelper.MapResources;
             map.firstNode = GameObject.Find(info.FirstNode).GetComponent<AbstractMapInteractiveEntity>();
             map.cameraProperties = info.CameraProperties;
             info.SetupAction?.Invoke(map);
