@@ -318,7 +318,7 @@ public static class AssetHelper
         /*MapInfo mapInfo = SceneRegistries.Maps.GetValue(SceneName);
         if (mapInfo != null)
         {
-            yield return instance.StartCoroutine(GetResources());
+            yield return instance.StartCoroutine(GetResources(mapInfo));
         }*/
         if (SceneName != previousSceneName && (preloadAtlases.Length > 0 || preloadMusic.Length > 0 || preloadSingles.Length > 0 || preloadMultiples.Length > 0))
         {
@@ -365,14 +365,14 @@ public static class AssetHelper
         yield break;
     }
 
-    private static IEnumerator GetResources(LevelInfo info)
+    private static IEnumerator GetResources<T>(T info) where T : class
     {
-        if (!AssetHelper.LevelResources[info.ActualType].ContainsKey(info.PlayerMode))
+        if (info is LevelInfo levelInfo && !AssetHelper.LevelResources[levelInfo.ActualType].ContainsKey(levelInfo.PlayerMode))
         {
             Level level;
-            if ((level = Level.Current) == null || level.CurrentScene.ToString() != info.ResourcesScene)
+            if ((level = Level.Current) == null || level.CurrentScene.ToString() != levelInfo.ResourcesScene)
             {
-                yield return SceneManager.LoadSceneAsync(info.ResourcesScene);
+                yield return SceneManager.LoadSceneAsync(levelInfo.ResourcesScene);
                 while ((level = Level.Current) == null)
                 {
                     yield return null;
@@ -380,14 +380,9 @@ public static class AssetHelper
             }
     	    AssetHelper.LevelResources[level.type][level.playerMode] = level.LevelResources;
         }
-        yield break;
-    }
-
-    /*public static IEnumerator GetResources()
-    {
-        if (AssetHelper.MapResources == null)
-        {
-            Map map;
+		/*if (info is MapInfo && AssetHelper.MapResources == null)
+		{
+			Map map;
             if ((map = Map.Current) == null)
             {
                 yield return SceneManager.LoadSceneAsync("scene_map_world_1");
@@ -397,9 +392,9 @@ public static class AssetHelper
                 }
             }
             AssetHelper.MapResources = map.MapResources;
-        }
+		}*/
         yield break;
-    }*/
+    }
 
     public static LevelResources GetLevelResources(Level level)
     {
